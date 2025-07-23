@@ -29,7 +29,7 @@ export function Header({ cartItems = 0 }: HeaderProps) {
                   alt="Comunidad Metal Logo"
                   width={200}
                   height={60}
-                  className="h-32 w-auto drop-shadow-2xl cursor-pointer"
+                  className="h-32 w-auto drop-shadow-2xl cursor-pointer logo-glow"
                 />
               </Link>
             </div>
@@ -64,7 +64,14 @@ export function Header({ cartItems = 0 }: HeaderProps) {
 
             <div className="flex items-center space-x-4">
               {/* Radio Button */}
-              
+              <Dialog open={isRadioOpen} onOpenChange={setIsRadioOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold shadow-lg hover:shadow-red-500/25 transition-all duration-300">
+                    <Radio className="w-5 h-5 mr-2" />
+                    Radio Online
+                  </Button>
+                </DialogTrigger>
+              </Dialog>
 
               {/* Cart Button */}
               <Link href="/carrito">
@@ -110,7 +117,7 @@ export function Header({ cartItems = 0 }: HeaderProps) {
                 >
                   Tienda
                 </Link>
-                <Button
+                {/* <Button
                   onClick={() => {
                     setIsRadioOpen(true)
                     setIsMobileMenuOpen(false)
@@ -120,7 +127,7 @@ export function Header({ cartItems = 0 }: HeaderProps) {
                 >
                   <Radio className="w-5 h-5 mr-2" />
                   Radio Online
-                </Button>
+                </Button> */}
                 <Link
                   href="/quienes-somos"
                   className="text-white hover:text-red-400 transition-all duration-300 font-bold text-lg"

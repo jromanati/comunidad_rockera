@@ -73,7 +73,7 @@ export default function TiendaPage() {
       id: 7,
       name: "Muñequera de Cuero con Pin",
       price: 3990,
-      image: "/images/stock/muñequera.jpg?height=400&width=400",
+      image: "/images/stock/mun_equera.jpg?height=400&width=400",
       description: "Muñequera de cuero genuino con pin metálico, talla única",
       category: "accesorios",
       rating: 4.5,
