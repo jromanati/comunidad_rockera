@@ -175,20 +175,15 @@ export default function ComunidadMetal() {
                     playsInline
                     src="/videos/video2.mp4?height=400&width=800"
                   />
-                  {/* Video overlay effects */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
                   <div className="absolute top-6 left-6">
                     <Badge className="bg-red-600 text-white font-bold animate-pulse text-lg px-4 py-2">🔴 LIVE</Badge>
                   </div>
                 </div>
-
-                {/* Decorative elements around video - Más prominentes */}
                 <div className="absolute -top-6 -left-6 w-12 h-12 border-l-4 border-t-4 border-red-500 rounded-tl-lg"></div>
                 <div className="absolute -top-6 -right-6 w-12 h-12 border-r-4 border-t-4 border-red-500 rounded-tr-lg"></div>
                 <div className="absolute -bottom-6 -left-6 w-12 h-12 border-l-4 border-b-4 border-red-500 rounded-bl-lg"></div>
                 <div className="absolute -bottom-6 -right-6 w-12 h-12 border-r-4 border-b-4 border-red-500 rounded-br-lg"></div>
-
-                {/* Efectos de luz alrededor del video */}
                 <div className="absolute -inset-4 bg-gradient-to-r from-red-600/20 via-transparent to-red-600/20 rounded-3xl blur-xl -z-10"></div>
                 <div className="absolute -inset-8 bg-gradient-to-r from-yellow-600/10 via-transparent to-yellow-600/10 rounded-3xl blur-2xl -z-20"></div>
               </div>
