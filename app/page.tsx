@@ -176,7 +176,7 @@ export default function ComunidadMetal() {
                     src="/videos/video2.mp4?height=400&width=800"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
-                  <div className="absolute top-6 left-6">
+                  <div className="absolute top-6 left-6 hidden md:block">
                     <Badge className="bg-red-600 text-white font-bold animate-pulse text-lg px-4 py-2">🔴 LIVE</Badge>
                   </div>
                 </div>

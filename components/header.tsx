@@ -42,6 +42,17 @@ export function Header({ cartItems = 0 }: HeaderProps) {
               >
                 Home
               </Link>
+              <Dialog open={isRadioOpen} onOpenChange={setIsRadioOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="text-white hover:text-red-400 font-bold text-lg hover:bg-red-950/30"
+                  >
+                    <Radio className="w-5 h-5 mr-2" />
+                    Radio Online
+                  </Button>
+                </DialogTrigger>
+              </Dialog>
               <Link
                 href="/tienda"
                 className="text-white hover:text-red-400 transition-all duration-300 font-bold text-lg hover:drop-shadow-lg"
@@ -63,16 +74,7 @@ export function Header({ cartItems = 0 }: HeaderProps) {
             </nav>
 
             <div className="flex items-center space-x-4">
-              {/* Radio Button */}
-              <Dialog open={isRadioOpen} onOpenChange={setIsRadioOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold shadow-lg hover:shadow-red-500/25 transition-all duration-300">
-                    <Radio className="w-5 h-5 mr-2" />
-                    Radio Online
-                  </Button>
-                </DialogTrigger>
-              </Dialog>
-
+              
               {/* Cart Button */}
               <Link href="/carrito">
                 <Button
@@ -110,14 +112,7 @@ export function Header({ cartItems = 0 }: HeaderProps) {
                 >
                   Home
                 </Link>
-                <Link
-                  href="/tienda"
-                  className="text-white hover:text-red-400 transition-all duration-300 font-bold text-lg"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Tienda
-                </Link>
-                {/* <Button
+                <Button
                   onClick={() => {
                     setIsRadioOpen(true)
                     setIsMobileMenuOpen(false)
@@ -127,7 +122,14 @@ export function Header({ cartItems = 0 }: HeaderProps) {
                 >
                   <Radio className="w-5 h-5 mr-2" />
                   Radio Online
-                </Button> */}
+                </Button>
+                <Link
+                  href="/tienda"
+                  className="text-white hover:text-red-400 transition-all duration-300 font-bold text-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Tienda
+                </Link>                
                 <Link
                   href="/quienes-somos"
                   className="text-white hover:text-red-400 transition-all duration-300 font-bold text-lg"

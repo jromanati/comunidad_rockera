@@ -129,7 +129,7 @@ export default function ComunidadMetal() {
       </div>
       <Header />
       {/* Hero Section - Rediseñado con video más grande */}
-      <section id="home" className="relative  flex items-center justify-center overflow-hidden h-[900px]">
+      <section id="home" className="relative  flex items-center justify-center overflow-hidden h-[900px] hidden md:block">
         <div className="absolute inset-0 z-0 bg-[#30387f]/40">
           <video
             ref={videoRef}
