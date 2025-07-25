@@ -11,9 +11,10 @@ import { RadioModal } from "@/components/radio-modal"
 
 interface HeaderProps {
   cartItems?: number
+  onRadioOpen: () => void
 }
 
-export function Header({ cartItems = 0 }: HeaderProps) {
+export function Header({ cartItems = 0, onRadioOpen }: HeaderProps) {
   const [isRadioOpen, setIsRadioOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 

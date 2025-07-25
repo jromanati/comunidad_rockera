@@ -20,8 +20,6 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
 
 export default function ComunidadMetal() {
   const videoRef = useRef<HTMLVideoElement | null>(null)
@@ -129,7 +127,6 @@ export default function ComunidadMetal() {
       </div>
 
       {/* Header - Sticky */}
-      <Header />
 
       {/* Hero Section - Rediseñado con video más grande */}
       <section id="home" className="relative  flex items-center justify-center overflow-hidden py-16">
@@ -420,9 +417,6 @@ export default function ComunidadMetal() {
         </div>
       </section>
       */}
-
-      {/* Footer */}
-      <Footer />
     </div>
   )
 }

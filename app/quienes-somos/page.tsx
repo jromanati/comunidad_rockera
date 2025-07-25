@@ -116,8 +116,7 @@ export default function QuienesSomosPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <Header />
+      {/* <Header /> */}
 
       {/* Hero Section */}
       <section className="relative py-16 bg-gradient-to-b from-black via-red-950/20 to-black overflow-hidden">
@@ -318,8 +317,6 @@ export default function QuienesSomosPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <Footer />
     </div>
   )
 }

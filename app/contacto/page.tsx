@@ -26,9 +26,6 @@ import {
   Flame,
   Zap,
 } from "lucide-react"
-import Link from "next/link"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
 
 export default function ContactoPage() {
   const [formData, setFormData] = useState({
@@ -138,9 +135,6 @@ export default function ContactoPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <Header />
-
       {/* Hero Section */}
       <section className="relative py-16 bg-gradient-to-b from-black via-red-950/20 to-black overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(220,38,38,0.1),transparent_50%)]"></div>
@@ -403,8 +397,6 @@ export default function ContactoPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <Footer />
     </div>
   )
 }

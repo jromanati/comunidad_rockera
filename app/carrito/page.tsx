@@ -5,12 +5,24 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { ShoppingCart, Plus, Minus, Trash2, CreditCard, Truck, Shield, Tag } from "lucide-react"
+import {
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash2,
+  CreditCard,
+  Truck,
+  Shield,
+  Tag,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Home,
+  MessageSquare,
+} from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-
 export default function CarritoPage() {
   const [cartItems, setCartItems] = useState([
     {
@@ -42,6 +54,17 @@ export default function CarritoPage() {
 
   const [promoCode, setPromoCode] = useState("")
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null)
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false)
+  const [customerData, setCustomerData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    city: "",
+    address: "",
+    postalCode: "",
+    comments: "",
+  })
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
 
   const updateQuantity = (id: number, newQuantity: number) => {
     if (newQuantity === 0) {
@@ -62,6 +85,53 @@ export default function CarritoPage() {
     }
   }
 
+  const handleInputChange = (field: string, value: string) => {
+    setCustomerData((prev) => ({ ...prev, [field]: value }))
+    // Limpiar error cuando el usuario empiece a escribir
+    if (formErrors[field]) {
+      setFormErrors((prev) => ({ ...prev, [field]: "" }))
+    }
+  }
+
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {}
+
+    if (!customerData.fullName.trim()) errors.fullName = "El nombre es obligatorio"
+    if (!customerData.email.trim()) errors.email = "El email es obligatorio"
+    else if (!/\S+@\S+\.\S+/.test(customerData.email)) errors.email = "Email inválido"
+    if (!customerData.phone.trim()) errors.phone = "El teléfono es obligatorio"
+    if (!customerData.city.trim()) errors.city = "La ciudad es obligatoria"
+    if (!customerData.address.trim()) errors.address = "La dirección es obligatoria"
+
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const handleCheckout = () => {
+    if (!showCheckoutForm) {
+      setShowCheckoutForm(true)
+      return
+    }
+
+    if (validateForm()) {
+      // Procesar el pedido
+      console.log("Pedido confirmado:", { cartItems, customerData, total })
+      alert("¡Pedido confirmado! Recibirás un email de confirmación.")
+      // Limpiar carrito y formulario
+      setCartItems([])
+      setCustomerData({
+        fullName: "",
+        email: "",
+        phone: "",
+        city: "",
+        address: "",
+        postalCode: "",
+        comments: "",
+      })
+      setShowCheckoutForm(false)
+    }
+  }
+
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const discount = appliedPromo ? subtotal * 0.1 : 0
   const shipping = subtotal > 30000 ? 0 : 3990
@@ -70,7 +140,7 @@ export default function CarritoPage() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
-      <Header cartItems={cartItems.length} />
+      {/* <Header cartItems={cartItems.length} /> */}
 
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
@@ -237,10 +307,133 @@ export default function CarritoPage() {
                     </div>
                   </div>
 
-                  <Button className="w-full mt-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold text-lg py-4">
+                  <Button
+                    onClick={handleCheckout}
+                    className="w-full mt-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold text-lg py-4"
+                  >
                     <CreditCard className="w-5 h-5 mr-2" />
-                    PROCEDER AL PAGO
+                    {showCheckoutForm ? "CONFIRMAR PEDIDO" : "PROCEDER AL PAGO"}
                   </Button>
+
+                  {/* Checkout Form */}
+                  {showCheckoutForm && (
+                    <Card className="bg-gradient-to-br from-gray-900 to-black border border-red-800/30 mt-6">
+                      <CardContent className="p-6">
+                        <h3 className="font-bold text-red-500 mb-6 text-xl">DATOS DEL CLIENTE</h3>
+
+                        <div className="space-y-4">
+                          {/* Nombre Completo */}
+                          <div>
+                            <label className="flex items-center text-white font-bold mb-2">
+                              <User className="w-4 h-4 mr-2 text-red-500" />
+                              Nombre Completo *
+                            </label>
+                            <Input
+                              type="text"
+                              value={customerData.fullName}
+                              onChange={(e) => handleInputChange("fullName", e.target.value)}
+                              className={`bg-gray-800 border-red-800/50 text-white ${formErrors.fullName ? "border-red-500" : ""}`}
+                              placeholder="Ingresa tu nombre completo"
+                            />
+                            {formErrors.fullName && <p className="text-red-400 text-sm mt-1">{formErrors.fullName}</p>}
+                          </div>
+
+                          {/* Email */}
+                          <div>
+                            <label className="flex items-center text-white font-bold mb-2">
+                              <Mail className="w-4 h-4 mr-2 text-red-500" />
+                              Email *
+                            </label>
+                            <Input
+                              type="email"
+                              value={customerData.email}
+                              onChange={(e) => handleInputChange("email", e.target.value)}
+                              className={`bg-gray-800 border-red-800/50 text-white ${formErrors.email ? "border-red-500" : ""}`}
+                              placeholder="tu@email.com"
+                            />
+                            {formErrors.email && <p className="text-red-400 text-sm mt-1">{formErrors.email}</p>}
+                          </div>
+
+                          {/* Teléfono */}
+                          <div>
+                            <label className="flex items-center text-white font-bold mb-2">
+                              <Phone className="w-4 h-4 mr-2 text-red-500" />
+                              Teléfono *
+                            </label>
+                            <Input
+                              type="tel"
+                              value={customerData.phone}
+                              onChange={(e) => handleInputChange("phone", e.target.value)}
+                              className={`bg-gray-800 border-red-800/50 text-white ${formErrors.phone ? "border-red-500" : ""}`}
+                              placeholder="+56 9 1234 5678"
+                            />
+                            {formErrors.phone && <p className="text-red-400 text-sm mt-1">{formErrors.phone}</p>}
+                          </div>
+
+                          {/* Ciudad */}
+                          <div>
+                            <label className="flex items-center text-white font-bold mb-2">
+                              <MapPin className="w-4 h-4 mr-2 text-red-500" />
+                              Ciudad *
+                            </label>
+                            <Input
+                              type="text"
+                              value={customerData.city}
+                              onChange={(e) => handleInputChange("city", e.target.value)}
+                              className={`bg-gray-800 border-red-800/50 text-white ${formErrors.city ? "border-red-500" : ""}`}
+                              placeholder="Santiago, Valparaíso, etc."
+                            />
+                            {formErrors.city && <p className="text-red-400 text-sm mt-1">{formErrors.city}</p>}
+                          </div>
+
+                          {/* Dirección */}
+                          <div>
+                            <label className="flex items-center text-white font-bold mb-2">
+                              <Home className="w-4 h-4 mr-2 text-red-500" />
+                              Dirección *
+                            </label>
+                            <Input
+                              type="text"
+                              value={customerData.address}
+                              onChange={(e) => handleInputChange("address", e.target.value)}
+                              className={`bg-gray-800 border-red-800/50 text-white ${formErrors.address ? "border-red-500" : ""}`}
+                              placeholder="Calle, número, depto/casa"
+                            />
+                            {formErrors.address && <p className="text-red-400 text-sm mt-1">{formErrors.address}</p>}
+                          </div>
+
+                          {/* Código Postal */}
+                          <div>
+                            <label className="flex items-center text-white font-bold mb-2">
+                              <Tag className="w-4 h-4 mr-2 text-red-500" />
+                              Código Postal
+                            </label>
+                            <Input
+                              type="text"
+                              value={customerData.postalCode}
+                              onChange={(e) => handleInputChange("postalCode", e.target.value)}
+                              className="bg-gray-800 border-red-800/50 text-white"
+                              placeholder="1234567 (opcional)"
+                            />
+                          </div>
+
+                          {/* Comentarios */}
+                          <div>
+                            <label className="flex items-center text-white font-bold mb-2">
+                              <MessageSquare className="w-4 h-4 mr-2 text-red-500" />
+                              Comentarios Adicionales
+                            </label>
+                            <textarea
+                              value={customerData.comments}
+                              onChange={(e) => handleInputChange("comments", e.target.value)}
+                              className="w-full bg-gray-800 border border-red-800/50 text-white rounded-md px-3 py-2 min-h-[80px] resize-none"
+                              placeholder="Instrucciones especiales de entrega, referencias, etc."
+                            />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Shipping Info */}
                   <div className="mt-6 space-y-3 text-sm text-gray-400">
@@ -269,7 +462,6 @@ export default function CarritoPage() {
           </div>
         )}
       </div>
-      <Footer />
     </div>
   )
 }

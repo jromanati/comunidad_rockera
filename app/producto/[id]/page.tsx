@@ -9,7 +9,6 @@ import { ShoppingCart, Heart, Share2, Star, Truck, Shield, RotateCcw, Plus, Minu
 import Image from "next/image"
 import Link from "next/link"
 import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
 
 export default function ProductoDetalle({ params }: { params: { id: string } }) {
   const [selectedSize, setSelectedSize] = useState("")
@@ -121,8 +120,7 @@ export default function ProductoDetalle({ params }: { params: { id: string } }) 
 
   return (
     <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <Header cartItems={cartItems} />
+      {/* <Header cartItems={cartItems} /> */}
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
@@ -464,7 +462,6 @@ export default function ProductoDetalle({ params }: { params: { id: string } }) 
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   )
 }

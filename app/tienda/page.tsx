@@ -11,7 +11,6 @@ import { ShoppingCart, Search, Grid3X3, List, Star, Eye, Heart, SlidersHorizonta
 import Image from "next/image"
 import Link from "next/link"
 import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
 
 export default function TiendaPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -124,7 +123,7 @@ export default function TiendaPage() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <Header cartItems={cartItems} />
+      {/* <Header cartItems={cartItems} /> */}
 
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
@@ -383,7 +382,6 @@ export default function TiendaPage() {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   )
 }
