@@ -11,8 +11,55 @@ import { ShoppingCart, Search, Grid3X3, List, Star, Eye, Heart, SlidersHorizonta
 import Image from "next/image"
 import Link from "next/link"
 import { Header } from "@/components/header"
+import { ProductService } from "@/services/product.service"
+import { CategoryService } from "@/services/category.service"
+import useSWR from 'swr'
 
 export default function TiendaPage() {
+
+  const fetchProducts = async () => {
+    const isAuthenticated = await ProductService.ensureAuthenticated()
+    console.log("User authenticated:", isAuthenticated)
+    if (!isAuthenticated) return []
+
+    const productsResponse = await ProductService.getProducts()
+    const fetchedProducts = productsResponse.data || []
+
+    return fetchedProducts.map((product: any) => ({
+      ...product,
+      image: product.main_image ?? "/placeholder.svg?height=300&width=300",
+    }))
+  }
+
+
+  const fetchCategories = async () => {
+    const isAuthenticated = await CategoryService.ensureAuthenticated()
+    console.log("User authenticated:", isAuthenticated)
+    if (!isAuthenticated) return []
+
+    const productsResponse = await CategoryService.getCategories()
+    const fetchedProducts = productsResponse.data || []
+
+    return fetchedProducts.map((product: any) => ({
+      ...product,
+      image: product.main_image ?? "/placeholder.svg?height=300&width=300",
+    }))
+  }
+  // Fetch products using SWR
+  /*const { data: categories = [] } = useSWR('categories', fetchCategories)
+  console.log("Categories fetched:", categories)*/
+  // Mock categories data
+  const isLoading = false // Replace with actual loading state if using SWR
+  
+  const categories = [
+    { id: "anillos", name: "Anillos", count: 24 },
+    { id: "gorros", name: "Gorros", count: 12 },
+    { id: "accesorios", name: "Accesorios", count: 15 },
+    { id: "instrumentos", name: "Instrumentos", count: 8 },
+  ]
+  
+
+
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [sortBy, setSortBy] = useState("featured")
   const [searchTerm, setSearchTerm] = useState("")
@@ -20,13 +67,11 @@ export default function TiendaPage() {
   const [priceRange, setPriceRange] = useState("")
   const [cartItems, setCartItems] = useState(0)
 
-  const categories = [
-    { id: "anillos", name: "Anillos", count: 24 },
-    { id: "gorros", name: "Gorros", count: 12 },
-    { id: "accesorios", name: "Accesorios", count: 15 },
-    { id: "instrumentos", name: "Instrumentos", count: 8 },
-  ]
+  // Fetch products using SWR
+  /*const { data: products = [], isLoading } = useSWR('products', fetchProducts)
+  console.log("Products fetched:", products)*/
 
+  // Mock products data
   const products = [
     {
       id: 1,
@@ -38,9 +83,10 @@ export default function TiendaPage() {
       category: "anillos",
       rating: 5,
       reviews: 24,
-      isNew: true,
+      is_new: true,
       discount: 20,
-      inStock: true,
+      in_stock: true,
+      colors: ["Negro", "Rojo", "Gris"],
       sizes: ["S", "M", "L", "XL", "XXL"],
     },
     {
@@ -53,7 +99,7 @@ export default function TiendaPage() {
       rating: 4.8,
       reviews: 18,
       isFeatured: true,
-      inStock: true,
+      in_stock: true,
       colors: ["Negro", "Rojo", "Gris"],
     },    
     {
@@ -65,7 +111,7 @@ export default function TiendaPage() {
       category: "accesorios",
       rating: 4.5,
       reviews: 28,
-      inStock: true,
+      in_stock: true,
       material: "Aleación de zinc",
     },
     {
@@ -77,7 +123,7 @@ export default function TiendaPage() {
       category: "accesorios",
       rating: 4.5,
       reviews: 28,
-      inStock: true,
+      in_stock: true,
       colors: ["Negro", "Rojo", "Gris"],
     },
     
@@ -105,7 +151,7 @@ export default function TiendaPage() {
       case "rating":
         return b.rating - a.rating
       case "newest":
-        return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0)
+        return (b.is_new ? 1 : 0) - (a.is_new ? 1 : 0)
       default:
         return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0)
     }
@@ -162,23 +208,30 @@ export default function TiendaPage() {
               <div className="mb-6">
                 <label className="block text-sm font-bold text-gray-300 mb-3">Categorías</label>
                 <div className="space-y-2">
-                  {categories.map((category) => (
-                    <div key={category.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={category.id}
-                        checked={selectedCategories.includes(category.id)}
-                        onCheckedChange={() => toggleCategory(category.id)}
-                        className="border-red-600 data-[state=checked]:bg-red-600"
-                      />
-                      <label
-                        htmlFor={category.id}
-                        className="text-sm text-gray-300 cursor-pointer flex-1 flex justify-between"
-                      >
-                        <span>{category.name}</span>
-                        <span className="text-red-500">({category.count})</span>
-                      </label>
+                  {isLoading ? (
+                    <div className="text-center py-20 text-gray-600">
+                      <span className="text-lg">Cargando categorías...</span>
                     </div>
-                  ))}
+                  ) : (
+                      categories.map((category) => (
+                      <div key={category.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={category.id}
+                          checked={selectedCategories.includes(category.id)}
+                          onCheckedChange={() => toggleCategory(category.id)}
+                          className="border-red-600 data-[state=checked]:bg-red-600"
+                        />
+                        <label
+                          htmlFor={category.id}
+                          className="text-sm text-gray-300 cursor-pointer flex-1 flex justify-between"
+                        >
+                          <span>{category.name}</span>
+                          <span className="text-red-500">({category.count})</span>
+                        </label>
+                      </div>
+                    ))
+                  )}
+                  
                 </div>
               </div>
 
@@ -280,13 +333,13 @@ export default function TiendaPage() {
 
                       {/* Badges */}
                       <div className="absolute top-4 left-4 flex flex-col space-y-2">
-                        {product.isNew && <Badge className="bg-green-600 text-white font-bold">NUEVO</Badge>}
+                        {product.is_new && <Badge className="bg-green-600 text-white font-bold">NUEVO</Badge>}
                         {product.isFeatured && <Badge className="bg-yellow-600 text-black font-bold">DESTACADO</Badge>}
                         {product.isLimited && <Badge className="bg-red-600 text-white font-bold">LIMITADO</Badge>}
                         {product.discount && (
                           <Badge className="bg-red-600 text-white font-bold">-{product.discount}%</Badge>
                         )}
-                        {!product.inStock && <Badge className="bg-gray-600 text-white font-bold">AGOTADO</Badge>}
+                        {!product.in_stock && <Badge className="bg-gray-600 text-white font-bold">AGOTADO</Badge>}
                       </div>
 
                       {/* Quick View Button */}
@@ -330,8 +383,17 @@ export default function TiendaPage() {
 
                         {/* Product Details */}
                         <div className="space-y-1 mb-4 text-xs text-gray-500">
-                          {product.sizes && <div>Tallas: {product.sizes.join(", ")}</div>}
-                          {product.colors && <div>Colores: {product.colors.join(", ")}</div>}
+                          {product.features && product.features.map((group, idx) => {
+                            const featureGroup = group.feature
+                            if (!featureGroup || !featureGroup.detail?.length) return null
+
+                            return (
+                              <div key={idx}>
+                                {featureGroup.name}: {featureGroup.detail.map((d) => d.name).join(", ")}
+                              </div>
+                            )
+                          })}
+
                           {product.material && <div>Material: {product.material}</div>}
                           {product.size && <div>Tamaño: {product.size}</div>}
                         </div>
@@ -348,11 +410,11 @@ export default function TiendaPage() {
                         </div>
                         <Button
                           onClick={() => addToCart(product.id)}
-                          disabled={!product.inStock}
+                          disabled={!product.in_stock}
                           className="bg-red-600 hover:bg-red-700 transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <ShoppingCart className="w-4 h-4 mr-2" />
-                          {product.inStock ? "Agregar" : "Agotado"}
+                          {product.in_stock ? "Agregar" : "Agotado"}
                         </Button>
                       </div>
                     </div>
@@ -362,7 +424,30 @@ export default function TiendaPage() {
             </div>
 
             {/* No Results */}
-            {sortedProducts.length === 0 && (
+            {isLoading ? (
+              <div className="text-center py-20 text-gray-600">
+                <span className="text-lg">Cargando catálogo...</span>
+              </div>
+            ) : (
+                sortedProducts.length === 0 && (
+                <div className="text-center py-16">
+                  <div className="text-6xl mb-4">🤘</div>
+                  <h3 className="text-2xl font-bold text-gray-300 mb-2">No se encontraron productos</h3>
+                  <p className="text-gray-500 mb-6">Intenta ajustar tus filtros de búsqueda</p>
+                  <Button
+                    onClick={() => {
+                      setSearchTerm("")
+                      setSelectedCategories([])
+                      setPriceRange("")
+                    }}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Limpiar Filtros
+                  </Button>
+                </div>
+              )
+            )}
+            {/* {sortedProducts.length === 0 && (
               <div className="text-center py-16">
                 <div className="text-6xl mb-4">🤘</div>
                 <h3 className="text-2xl font-bold text-gray-300 mb-2">No se encontraron productos</h3>
@@ -378,7 +463,7 @@ export default function TiendaPage() {
                   Limpiar Filtros
                 </Button>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>

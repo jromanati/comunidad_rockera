@@ -126,41 +126,16 @@ export default function ComunidadMetal() {
          opacity-5 bg-cover bg-center"></div>
       </div>
 
-      {/* Header - Sticky */}
 
       {/* Hero Section - Rediseñado con video más grande */}
       <section id="home" className="relative  flex items-center justify-center overflow-hidden py-16">
         {/* Animated Background Elements */}
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center ">
-            <div className="lg:col-span-2 text-left">
-              {/* Animated Title - Más pequeño */}
-              <div className="mb-6">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-yellow-500 to-red-600 drop-shadow-2xl animate-pulse">
-                  BIENVENIDOS
-                </h1>
-                <h2 className="text-2xl md:text-3xl lg:text-4xl font-black mb-4 text-white drop-shadow-2xl">
-                  A LA COMUNIDAD
-                </h2>
-                <div className="relative">
-                  <h3 className="text-3xl md:text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-red-500 to-yellow-500 drop-shadow-2xl">
-                    METAL
-                  </h3>
-                  <div className="absolute inset-0 text-3xl md:text-4xl lg:text-5xl font-black text-red-500/20 blur-sm">
-                    METAL
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3 mb-6">
-                <p className="text-lg md:text-xl font-bold text-gray-300">
-                  La comunidad la hacemos todos!!
-                </p>
-              </div>
-            </div>
+            
 
             {/* Right Side - Video Section (Más grande) */}
-            <div className="lg:col-span-3 flex items-center justify-center">
+            <div className="lg:col-span-6 flex items-center justify-center">
               <div className="relative w-full max-w-4xl">
                 <div className="relative bg-gradient-to-br from-gray-900 to-black border-2 border-red-800 rounded-3xl overflow-hidden shadow-2xl shadow-red-500/25">
                   <video
@@ -170,17 +145,10 @@ export default function ComunidadMetal() {
                     loop
                     muted
                     playsInline
-                    src="/videos/video2.mp4?height=400&width=800"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
-                  <div className="absolute top-6 left-6 hidden md:block">
-                    <Badge className="bg-red-600 text-white font-bold animate-pulse text-lg px-4 py-2">🔴 LIVE</Badge>
-                  </div>
+                    src="/videos/video4.mp4?height=400&width=800"
+                  />                  
                 </div>
-                <div className="absolute -top-6 -left-6 w-12 h-12 border-l-4 border-t-4 border-red-500 rounded-tl-lg"></div>
-                <div className="absolute -top-6 -right-6 w-12 h-12 border-r-4 border-t-4 border-red-500 rounded-tr-lg"></div>
-                <div className="absolute -bottom-6 -left-6 w-12 h-12 border-l-4 border-b-4 border-red-500 rounded-bl-lg"></div>
-                <div className="absolute -bottom-6 -right-6 w-12 h-12 border-r-4 border-b-4 border-red-500 rounded-br-lg"></div>
+                
                 <div className="absolute -inset-4 bg-gradient-to-r from-red-600/20 via-transparent to-red-600/20 rounded-3xl blur-xl -z-10"></div>
                 <div className="absolute -inset-8 bg-gradient-to-r from-yellow-600/10 via-transparent to-yellow-600/10 rounded-3xl blur-2xl -z-20"></div>
               </div>
@@ -417,6 +385,7 @@ export default function ComunidadMetal() {
         </div>
       </section>
       */}
+
     </div>
   )
 }
