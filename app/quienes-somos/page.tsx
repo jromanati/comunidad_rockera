@@ -30,7 +30,7 @@ export default function QuienesSomosPage() {
       name: "Alex Rodriguez",
       role: "Fundador & Director",
       description: "Metalero desde los 90s, creador de la comunidad",
-      image: "/placeholder.svg?height=300&width=300",
+      image: "/images/yo_metal.png?height=300&width=300",
       specialty: "Death Metal",
     },
     {
@@ -259,7 +259,7 @@ export default function QuienesSomosPage() {
                       alt={member.name}
                       width={300}
                       height={300}
-                      className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full object-contain group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute top-4 right-4">
                       <Badge className="bg-red-600 text-white font-bold">{member.specialty}</Badge>
