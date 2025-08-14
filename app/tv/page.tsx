@@ -250,7 +250,7 @@ export default function ComunidadMetalTV() {
               <CardHeader>
                 <CardTitle className="text-lg text-red-500 flex items-center">
                   <Calendar className="w-5 h-5 mr-2" />
-                  Próximos Programas????
+                  Próximos Programas
                 </CardTitle>
               </CardHeader>
               <CardContent>
