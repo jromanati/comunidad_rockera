@@ -23,11 +23,11 @@ import {
 } from "lucide-react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { AlertTriangle } from "lucide-react"
 
 export default function ComunidadMetalTV() {
-  const [isServerOnline, setIsServerOnline] = useState<boolean | null>(null)
+  // 
   const [isLive, setIsLive] = useState(true)
+  const [videoId, setVideoId] = useState<string | null>(null)
   const [viewers, setViewers] = useState(1247)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [volume, setVolume] = useState(75)
@@ -38,6 +38,53 @@ export default function ComunidadMetalTV() {
     { user: "ThrashLover", message: "¿Cuándo tocan Pentagram?", time: "21:47" },
     { user: "MetalQueen", message: "La mejor radio de Chile 🔥", time: "21:48" },
   ])
+  const API_KEY = "AIzaSyCXJRm3kM2wg_NazUf2fcFGNhXimSOlrUc"
+  const CHANNEL_ID = "UCS1sW2a3JbvQxscSYPVvBug"
+  // const checkYouTubeLive = async (): Promise<boolean> => {
+  //   const res = await fetch(
+  //     `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&type=video&eventType=live&key=${API_KEY}`
+  //   )
+
+  //   const data = await res.json()
+  //   return data.items && data.items.length > 0
+  // }
+  
+  // useEffect(() => {
+  //   const fetchLiveStatus = async () => {
+  //     const online = await checkYouTubeLive()
+  //     setIsLive(online)
+  //   }
+
+  //   fetchLiveStatus()
+  //   const interval = setInterval(fetchLiveStatus, 30000) // cada 30 seg
+  //   return () => clearInterval(interval)
+  // }, [])
+
+  useEffect(() => {
+    const fetchLiveVideoId = async () => {
+      try {
+        // const res = await fetch(
+        //   `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=TU_CHANNEL_ID&type=video&eventType=live&key=TU_API_KEY`
+        // )
+        const res = await fetch(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&type=video&eventType=live&key=${API_KEY}`
+        )
+        const data = await res.json()
+        if (data.items && data.items.length > 0) {
+          const id = data.items[0].id.videoId
+          setVideoId(id)
+          setIsLive(true)
+        } else {
+          setIsLive(false)
+        }
+      } catch (error) {
+        console.error("Error fetching YouTube live stream", error)
+        setIsLive(false)
+      }
+    }
+
+    fetchLiveVideoId()
+  }, [])
 
   const upcomingShows = [
     { time: "22:00", show: "Metal Chileno en Vivo", band: "Pentagram Chile" },
@@ -62,22 +109,6 @@ export default function ComunidadMetalTV() {
   const toggleMute = () => {
     setIsMuted(!isMuted)
   }
-
-  useEffect(() => {
-    const checkOwncastStatus = async () => {
-      try {
-        const res = await fetch("http://localhost:8080/api/status", { cache: "no-store" })
-        if (!res.ok) throw new Error("Offline")
-        setIsServerOnline(true)
-      } catch (error) {
-        setIsServerOnline(false)
-      }
-    }
-
-    checkOwncastStatus()
-  }, [])
-
-
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black">
@@ -129,25 +160,20 @@ export default function ComunidadMetalTV() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className={`relative ${isFullscreen ? "fixed inset-0 z-50 bg-black" : "aspect-video"}`}>
-                  {isServerOnline ? (
-                    <iframe
-                      src="http://localhost:8080/embed/video"
-                      width="100%"
-                      height={isFullscreen ? "100%" : "600"}
-                      allowFullScreen
-                      className="w-full h-full border-0"
-                      title="Comunidad Metal TV - Transmisión en Vivo"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-[600px] bg-black text-red-500 border border-red-700 rounded-lg p-6 text-center">
-                      <div>
-                        <AlertTriangle className="w-12 h-12 mx-auto mb-4" />
-                        <p className="text-xl font-bold">Stream no disponible</p>
-                        <p className="text-sm text-gray-400 mt-2">El servidor aún no está activo. Por favor, vuelve más tarde.</p>
+                   {isLive ? (
+                      <iframe
+                        src="https://www.youtube.com/embed/live_stream?channel=UCS1sW2a3JbvQxscSYPVvBug&autoplay=1"
+                        width="100%"
+                        height="600"
+                        allowFullScreen
+                        className="w-full h-full border-0"
+                        title="Comunidad Metal TV"
+                      />
+                    ) : (
+                      <div className="h-[600px] flex items-center justify-center bg-black text-red-500">
+                        <p>No hay transmisión en vivo en este momento.</p>
                       </div>
-                    </div>
-                  )}
-                  
+                    )}
 
                 </div>
               </CardContent>
@@ -204,18 +230,16 @@ export default function ComunidadMetalTV() {
               </CardHeader>
               <CardContent>
                 <div className="bg-gray-900 rounded-lg p-2 shadow-inner border border-red-800">
-                  {isServerOnline ? (
+                  {isLive && videoId ? (
                     <iframe
-                      src="http://localhost:8080/embed/chat"
+                      src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=https://maqueta-comunidad-rockera.vercel.app`}
                       width="100%"
-                      height="300"
-                      className="w-full h-[300px] border-none rounded-md"
-                      title="Chat en Vivo - Comunidad Metal"
-                    />
+                      height="400"
+                      className="w-full h-[400px] border-none rounded-md"
+                      title="Chat en Vivo"
+                  />
                   ) : (
-                    <div className="w-full h-64 bg-black text-red-500 flex items-center justify-center border border-red-800">
-                      <p>💬 El chat estará disponible cuando comience la transmisión en vivo</p>
-                    </div>
+                    <div className="text-center text-red-500 py-4">El chat aparecerá cuando inicie la transmisión.</div>
                   )}
                 </div>
               </CardContent>
