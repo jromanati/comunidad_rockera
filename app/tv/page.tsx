@@ -160,20 +160,18 @@ export default function ComunidadMetalTV() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className={`relative ${isFullscreen ? "fixed inset-0 z-50 bg-black" : "aspect-video"}`}>
-                   {isLive ? (
-                      <iframe
-                        src="https://www.youtube.com/embed/live_stream?channel=UCS1sW2a3JbvQxscSYPVvBug&autoplay=1"
-                        width="100%"
-                        height="600"
-                        allowFullScreen
-                        className="w-full h-full border-0"
-                        title="Comunidad Metal TV"
-                      />
-                    ) : (
-                      <div className="h-[600px] flex items-center justify-center bg-black text-red-500">
-                        <p>No hay transmisión en vivo en este momento.</p>
-                      </div>
-                    )}
+                   {isLive && videoId ? (
+  <iframe
+    src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`}
+    width="100%"
+    height="600"
+    className="w-full h-full border-0"
+    allowFullScreen
+    title="Comunidad Metal TV"
+  />
+) : (
+  <div className="text-center text-red-500 py-20">No hay transmisión en vivo en este momento.</div>
+)}
 
                 </div>
               </CardContent>
@@ -232,12 +230,12 @@ export default function ComunidadMetalTV() {
                 <div className="bg-gray-900 rounded-lg p-2 shadow-inner border border-red-800">
                   {isLive && videoId ? (
                     <iframe
-                      src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=https://maqueta-comunidad-rockera.vercel.app`}
+                      src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=https://maqueta-comunidad-rockera.vercel.app/tv`}
                       width="100%"
                       height="400"
                       className="w-full h-[400px] border-none rounded-md"
                       title="Chat en Vivo"
-                  />
+                    />
                   ) : (
                     <div className="text-center text-red-500 py-4">El chat aparecerá cuando inicie la transmisión.</div>
                   )}
@@ -250,7 +248,7 @@ export default function ComunidadMetalTV() {
               <CardHeader>
                 <CardTitle className="text-lg text-red-500 flex items-center">
                   <Calendar className="w-5 h-5 mr-2" />
-                  Próximos Programas
+                  Próximos Programas????
                 </CardTitle>
               </CardHeader>
               <CardContent>
