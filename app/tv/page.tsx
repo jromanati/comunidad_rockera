@@ -62,25 +62,9 @@ export default function ComunidadMetalTV() {
 
   useEffect(() => {
     const fetchLiveVideoId = async () => {
-      try {
-        // const res = await fetch(
-        //   `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=TU_CHANNEL_ID&type=video&eventType=live&key=TU_API_KEY`
-        // )
-        const res = await fetch(
-          `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&type=video&eventType=live&key=${API_KEY}`
-        )
-        const data = await res.json()
-        if (data.items && data.items.length > 0) {
-          const id = data.items[0].id.videoId
-          setVideoId(id)
-          setIsLive(true)
-        } else {
-          setIsLive(false)
-        }
-      } catch (error) {
-        console.error("Error fetching YouTube live stream", error)
-        setIsLive(false)
-      }
+      const id = 'kXgOoBQlPow'
+      setVideoId(id)
+      setIsLive(true)
     }
 
     fetchLiveVideoId()
