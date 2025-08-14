@@ -85,7 +85,7 @@ export default function ContactoPage() {
     {
       icon: Phone,
       title: "Teléfono",
-      info: "+56 9 1234 5678",
+      info: "+56 9 6234 3884",
       description: "Lun - Vie: 9:00 - 18:00",
     },
     {

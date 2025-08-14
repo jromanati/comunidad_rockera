@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogTrigger } from "@/components/ui/dialog"
-import { ShoppingCart, Play, Radio, Menu, X } from "lucide-react"
+import { ShoppingCart, Radio, Menu, X, Tv } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { RadioModal } from "@/components/radio-modal"
@@ -54,6 +54,13 @@ export function Header({ cartItems = 0, onRadioOpen }: HeaderProps) {
                   </Button>
                 </DialogTrigger>
               </Dialog>
+              <Link
+                href="/tv"
+                className="text-white hover:text-red-400 transition-all duration-300 font-bold text-lg hover:drop-shadow-lg flex items-center"
+              >
+                <Tv className="w-5 h-5 mr-2" />
+                TV en Vivo
+              </Link>
               <Link
                 href="/tienda"
                 className="text-white hover:text-red-400 transition-all duration-300 font-bold text-lg hover:drop-shadow-lg"

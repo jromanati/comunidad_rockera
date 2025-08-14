@@ -56,7 +56,7 @@ export function Footer() {
               </div>
               <div className="flex items-center space-x-3 hover:text-red-400 transition-colors cursor-pointer">
                 <Phone className="w-5 h-5" />
-                <span className="text-lg">+56 9 1234 5678</span>
+                <span className="text-lg">+56 9 6234 3884</span>
               </div>
               <div className="flex items-center space-x-3 hover:text-red-400 transition-colors cursor-pointer">
                 <MapPin className="w-5 h-5" />
