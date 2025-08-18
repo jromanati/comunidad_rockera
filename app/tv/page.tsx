@@ -441,8 +441,8 @@ export default function ComunidadMetalTV() {
                 <CardContent>
                   <div className="bg-gray-900 rounded-lg p-2 shadow-inner border border-red-800">
                     <iframe
-                      src={`https://www.youtube.com/live_chat?v=${id_streaming_live}&embed_domain=localhost`}
-                      // src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=maqueta-comunidad-rockera.vercel.app`}
+                      // src={`https://www.youtube.com/live_chat?v=${id_streaming_live}&embed_domain=localhost`}
+                      src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=maqueta-comunidad-rockera.vercel.app`}
                       width="100%"
                       height="400"
                       className="w-full h-[400px] border-none rounded-md"
