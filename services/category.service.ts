@@ -11,17 +11,19 @@ export interface Category {
 export class CategoryService {
   // Obtener todos los productos con filtros
   static async getCategories(): Promise<ApiResponse<Category>> {
-    const params = new URLSearchParams({
-      ...Object.entries({}).reduce(
-        (acc, [key, value]) => {
-          if (value !== undefined && value !== null && value !== "") {
-            acc[key] = value.toString()
-          }
-          return acc
-        },
-        {} as Record<string, string>,
-      ),
-    })
+    const token = await AuthService.getValidToken()
+    
+    if (!token) {
+      console.log('no existe')
+      return {
+        success: false,
+        error: "No se pudo autenticar",
+      }
+    }
+
+    // Asignar token al cliente
+    //apiClient.setToken(token)
+
     return apiClient.get<Category>(`categories`)
   }
   static async ensureAuthenticated(): Promise<boolean> {

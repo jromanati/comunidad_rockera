@@ -7,7 +7,17 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ShoppingCart, Search, Grid3X3, List, Star, Eye, Heart, SlidersHorizontal } from "lucide-react"
+import {
+  ShoppingCart,
+  Search,
+  Grid3X3,
+  List,
+  Star,
+  Eye,
+  SlidersHorizontal,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { Header } from "@/components/header"
@@ -17,45 +27,109 @@ import useSWR from 'swr'
 
 export default function TiendaPage() {
 
-  const fetchProducts = async () => {
-    const isAuthenticated = await ProductService.ensureAuthenticated()
-    console.log("User authenticated:", isAuthenticated)
-    if (!isAuthenticated) return []
+  // const fetchProducts = async () => {
+  //   const isAuthenticated = await ProductService.ensureAuthenticated()
+  //   console.log("User authenticated:", isAuthenticated)
+  //   if (!isAuthenticated) return []
 
-    const productsResponse = await ProductService.getProducts()
-    const fetchedProducts = productsResponse.data || []
+  //   const productsResponse = await ProductService.getProducts()
+  //   const fetchedProducts = productsResponse.data || []
 
-    return fetchedProducts.map((product: any) => ({
-      ...product,
-      image: product.main_image ?? "/placeholder.svg?height=300&width=300",
-    }))
-  }
+  //   return fetchedProducts.map((product: any) => ({
+  //     ...product,
+  //     image: product.main_image ?? "/placeholder.svg?height=300&width=300",
+  //   }))
+  // }
 
 
-  const fetchCategories = async () => {
-    const isAuthenticated = await CategoryService.ensureAuthenticated()
-    console.log("User authenticated:", isAuthenticated)
-    if (!isAuthenticated) return []
+  // const fetchCategories = async () => {
+  //   // const isAuthenticated = await CategoryService.ensureAuthenticated()
+  //   // console.log("User authenticated:", isAuthenticated)
+  //   // if (!isAuthenticated) return []
 
-    const productsResponse = await CategoryService.getCategories()
-    const fetchedProducts = productsResponse.data || []
+  //   const categoriesResponse = await CategoryService.getCategories()
+  //   const fetchedCategories = categoriesResponse.data || []
 
-    return fetchedProducts.map((product: any) => ({
-      ...product,
-      image: product.main_image ?? "/placeholder.svg?height=300&width=300",
-    }))
-  }
+  //   return fetchedCategories.map((product: any) => ({
+  //     ...product,
+  //     image: product.main_image ?? "/placeholder.svg?height=300&width=300",
+  //   }))
+  // }
   // Fetch products using SWR
-  /*const { data: categories = [] } = useSWR('categories', fetchCategories)
-  console.log("Categories fetched:", categories)*/
+  // const { data: categories = [] } = useSWR('categories', fetchCategories)
+  // console.log("Categories fetched:", categories)
   // Mock categories data
   const isLoading = false // Replace with actual loading state if using SWR
   
-  const categories = [
-    { id: "anillos", name: "Anillos", count: 24 },
-    { id: "gorros", name: "Gorros", count: 12 },
-    { id: "accesorios", name: "Accesorios", count: 15 },
-    { id: "instrumentos", name: "Instrumentos", count: 8 },
+  const categories: Category[] = [
+    {
+      id: "ropa",
+      name: "Ropa",
+      products_count: 45,
+      parent: null,
+      subcategories: [
+        { id: "camisetas", name: "Camisetas", products_count: 25, parent: "ropa" },
+        { id: "sudaderas", name: "Sudaderas", products_count: 12, parent: "ropa" },
+        { id: "chaquetas", name: "Chaquetas", products_count: 8, parent: "ropa" },
+      ],
+    },
+    {
+      id: "accesorios",
+      name: "Accesorios",
+      products_count: 38,
+      parent: null,
+      subcategories: [
+        { id: "anillos", name: "Anillos", products_count: 15, parent: "accesorios" },
+        { id: "collares", name: "Collares", products_count: 10, parent: "accesorios" },
+        { id: "pulseras", name: "Pulseras", products_count: 8, parent: "accesorios" },
+        { id: "aros", name: "Aros", products_count: 5, parent: "accesorios" },
+      ],
+    },
+    {
+      id: "gorros",
+      name: "Gorros y Sombreros",
+      products_count: 18,
+      parent: null,
+      subcategories: [
+        { id: "snapback", name: "Snapback", products_count: 8, parent: "gorros" },
+        { id: "beanie", name: "Beanie", products_count: 6, parent: "gorros" },
+        { id: "trucker", name: "Trucker", products_count: 4, parent: "gorros" },
+      ],
+    },
+    {
+      id: "musica",
+      name: "Música",
+      products_count: 32,
+      parent: null,
+      subcategories: [
+        { id: "vinilos", name: "Vinilos", products_count: 15, parent: "musica" },
+        { id: "cds", name: "CDs", products_count: 12, parent: "musica" },
+        { id: "cassettes", name: "Cassettes", products_count: 5, parent: "musica" },
+      ],
+    },
+    {
+      id: "instrumentos",
+      name: "Instrumentos",
+      products_count: 24,
+      parent: null,
+      subcategories: [
+        { id: "guitarras", name: "Guitarras", products_count: 10, parent: "instrumentos" },
+        { id: "bajos", name: "Bajos", products_count: 6, parent: "instrumentos" },
+        { id: "baterias", name: "Baterías", products_count: 5, parent: "instrumentos" },
+        { id: "accesorios-inst", name: "Accesorios", products_count: 3, parent: "instrumentos" },
+      ],
+    },
+    {
+      id: "coleccionables",
+      name: "Coleccionables",
+      products_count: 16,
+      parent: null,
+      subcategories: [
+        { id: "parches", name: "Parches", products_count: 8, parent: "coleccionables" },
+        { id: "pins", name: "Pins", products_count: 5, parent: "coleccionables" },
+        { id: "posters", name: "Posters", products_count: 3, parent: "coleccionables" },
+      ],
+    },
   ]
   
 
@@ -66,12 +140,14 @@ export default function TiendaPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [priceRange, setPriceRange] = useState("")
   const [cartItems, setCartItems] = useState(0)
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([])
 
   // Fetch products using SWR
-  /*const { data: products = [], isLoading } = useSWR('products', fetchProducts)
-  console.log("Products fetched:", products)*/
+  // const { data: products = [], isLoading } = useSWR('products', fetchProducts)
+  // console.log("Products fetched:", products)
 
   // Mock products data
+  
   const products = [
     {
       id: 1,
@@ -161,10 +237,43 @@ export default function TiendaPage() {
     setCartItems((prev) => prev + 1)
   }
 
+  // const toggleCategory = (categoryId: string) => {
+  //   setSelectedCategories((prev) =>
+  //     prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
+  //   )
+  // }
   const toggleCategory = (categoryId: string) => {
-    setSelectedCategories((prev) =>
+    setSelectedCategories((prev) => {
+      if (prev.includes(categoryId)) {
+        // Si se deselecciona una categoría principal, también deseleccionar sus subcategorías
+        const category = categories.find((cat) => cat.id === categoryId)
+        if (category && category.subcategories) {
+          const subcategoryIds = category.subcategories.map((sub) => sub.id)
+          return prev.filter((id) => id !== categoryId && !subcategoryIds.includes(id))
+        }
+        return prev.filter((id) => id !== categoryId)
+      } else {
+        return [...prev, categoryId]
+      }
+    })
+  }
+
+  const toggleCategoryExpansion = (categoryId: string) => {
+    setExpandedCategories((prev) =>
       prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
     )
+  }
+
+  const isCategorySelected = (categoryId: string) => {
+    return selectedCategories.includes(categoryId)
+  }
+
+  const isSubcategorySelected = (subcategoryId: string) => {
+    return selectedCategories.includes(subcategoryId)
+  }
+
+  const getSelectedCategoriesCount = () => {
+    return selectedCategories.length
   }
 
   return (
@@ -187,6 +296,9 @@ export default function TiendaPage() {
               <h3 className="font-bold text-red-500 mb-6 text-xl flex items-center">
                 <SlidersHorizontal className="w-5 h-5 mr-2" />
                 FILTROS
+                {getSelectedCategoriesCount() > 0 && (
+                  <Badge className="ml-2 bg-red-600 text-white">{getSelectedCategoriesCount()}</Badge>
+                )}
               </h3>
 
               {/* Search */}
@@ -206,32 +318,76 @@ export default function TiendaPage() {
 
               {/* Categories */}
               <div className="mb-6">
-                <label className="block text-sm font-bold text-gray-300 mb-3">Categorías</label>
-                <div className="space-y-2">
-                  {isLoading ? (
-                    <div className="text-center py-20 text-gray-600">
-                      <span className="text-lg">Cargando categorías...</span>
-                    </div>
-                  ) : (
-                      categories.map((category) => (
-                      <div key={category.id} className="flex items-center space-x-2">
+                <label className="block text-sm font-bold text-gray-300 mb-3">
+                  Categorías
+                  {getSelectedCategoriesCount() > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-2 text-xs text-red-400 hover:text-red-300 p-0 h-auto"
+                      onClick={() => setSelectedCategories([])}
+                    >
+                      Limpiar
+                    </Button>
+                  )}
+                </label>
+                <div className="space-y-1 max-h-80 overflow-y-auto">
+                  {/* {categories.map((category) => ( */}
+                  {categories.filter((category) => category.parent === null).map((category) => (
+                    <div key={category.id} className="space-y-1">
+                      {/* Categoría Principal */}
+                      <div className="flex items-center space-x-2 py-1">
                         <Checkbox
                           id={category.id}
-                          checked={selectedCategories.includes(category.id)}
+                          checked={isCategorySelected(category.id)}
                           onCheckedChange={() => toggleCategory(category.id)}
                           className="border-red-600 data-[state=checked]:bg-red-600"
                         />
-                        <label
-                          htmlFor={category.id}
-                          className="text-sm text-gray-300 cursor-pointer flex-1 flex justify-between"
+                        <button
+                          onClick={() => toggleCategoryExpansion(category.id)}
+                          className="flex items-center space-x-1 flex-1 text-left hover:text-red-400 transition-colors"
                         >
-                          <span>{category.name}</span>
-                          <span className="text-red-500">({category.count})</span>
-                        </label>
+                          {category.subcategories &&
+                            category.subcategories.length > 0 &&
+                            (expandedCategories.includes(category.id) ? (
+                              <ChevronDown className="w-3 h-3 text-gray-500" />
+                            ) : (
+                              <ChevronRight className="w-3 h-3 text-gray-500" />
+                            ))}
+                          <label
+                            htmlFor={category.id}
+                            className="text-sm text-gray-300 cursor-pointer flex-1 flex justify-between font-medium"
+                          >
+                            <span>{category.name}</span>
+                            <span className="text-red-500">({category.products_count})</span>
+                          </label>
+                        </button>
                       </div>
-                    ))
-                  )}
-                  
+
+                      {/* Subcategorías */}
+                      {category.subcategories && expandedCategories.includes(category.id) && (
+                        <div className="ml-6 space-y-1 border-l border-red-800/30 pl-3">
+                          {category.subcategories.map((subcategory) => (
+                            <div key={subcategory.id} className="flex items-center space-x-2 py-1">
+                              <Checkbox
+                                id={subcategory.id}
+                                checked={isSubcategorySelected(subcategory.id)}
+                                onCheckedChange={() => toggleCategory(subcategory.id)}
+                                className="border-red-600 data-[state=checked]:bg-red-600"
+                              />
+                              <label
+                                htmlFor={subcategory.id}
+                                className="text-sm text-gray-400 cursor-pointer flex-1 flex justify-between hover:text-gray-300 transition-colors"
+                              >
+                                <span>{subcategory.name}</span>
+                                <span className="text-red-400">({subcategory.products_count})</span>
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
 
