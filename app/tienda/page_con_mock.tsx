@@ -1,128 +1,286 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import useSWR from "swr"
-import Link from "next/link"
-import Image from "next/image"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ShoppingCart, Search, Grid3X3, List, Star, Eye, SlidersHorizontal, ChevronDown, ChevronRight } from "lucide-react"
-import { useCart } from "@/app/store/cart"
-import { useProduct, useCatalogUpdates } from "@/hooks/use-products"
+import {
+  ShoppingCart,
+  Search,
+  Grid3X3,
+  List,
+  Star,
+  Eye,
+  SlidersHorizontal,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { Header } from "@/components/header"
+import { ProductService } from "@/services/product.service"
+import { CategoryService } from "@/services/category.service"
+import useSWR from 'swr'
+import { useCart } from "@/app/store/cart"   // ⬅️ NUEVO
+import {useProduct} from "@/hooks/use-products"
+import { Product } from "@/types/products"
 
-// ⚠️ Evita colisión de tipos: "Product" aquí es catálogo, no item
-type CatalogPayload = {
-  products: any[]
-  categories: any[]
-  brands: any[]
+interface Brand {
+  id: string
+  name: string
+  count: number
 }
 
 export default function TiendaPage() {
-  useCatalogUpdates();
-  const { addItem } = useCart()
+  const { addItem } = useCart()  // ⬅️ NUEVO
   const { getProducts } = useProduct()
-
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([])
+  const brands2: Brand[] = [
+    { id: "iron-maiden", name: "Iron Maiden", count: 12 },
+    { id: "metallica", name: "Metallica", count: 8 },
+    { id: "slayer", name: "Slayer", count: 6 },
+    { id: "pentagram", name: "Pentagram", count: 5 },
+    { id: "metal-chile", name: "Metal Chile", count: 15 },
+    { id: "demona-mort", name: "Demona Mort", count: 4 },
+    { id: "black-sabbath", name: "Black Sabbath", count: 7 },
+    { id: "megadeth", name: "Megadeth", count: 3 },
+  ]
   const PLACEHOLDER = "/placeholder.svg?height=300&width=300"
 
-  const firstImageUrl = (images?: any[]): string | undefined => {
-    if (!Array.isArray(images) || images.length === 0) return undefined
+  function firstImageUrl(images?: any): string | undefined {
+    if (!images || !Array.isArray(images) || images.length === 0) return undefined
     const first = images[0]
     return typeof first === "string" ? first : (first?.url || first?.secure_url || first?.path)
   }
 
-  const mapProduct = (product: any) => {
-    const image = product?.main_image || firstImageUrl(product?.images) || PLACEHOLDER
-    return {
-      ...product,
-      image,
-      features: product?.features ?? [],
-      in_stock: product?.in_stock ?? true,
-    }
+  function mapProduct(product: any) {
+    const image = product.main_image || product.images[0].url || PLACEHOLDER
+    return { ...product, image }
   }
 
-  const mapCategory = (c: any) => ({ ...c })
-  const mapBrand = (b: any) => ({ ...b })
+  function mapCategory(category: any) {
+    return { ...category}
+  }
 
-  // ✅ Memoriza el fetcher y úsalo solo cuando getProducts exista
-  const fetchCatalog = useCallback(async (): Promise<CatalogPayload> => {
-    const resp = await getProducts()
-    console.log("SWR fetchCatalog resp:", resp)
+  function mapBrands(brand: any) {
+    return { ...brand}
+  }
 
-    // Asegura compatibilidad según como devuelva tu hook
+  const fetchCatalog = async (): Promise<Product> => {
+    const resp = await getProducts() // ← NUEVO endpoint combinado
     const rawProducts = resp?.products ?? resp?.data?.products ?? []
     const rawCategories = resp?.categories ?? resp?.data?.categories ?? []
     const rawBrands = resp?.brands ?? resp?.data?.brands ?? []
-
     return {
       products: rawProducts.map(mapProduct),
       categories: rawCategories.map(mapCategory),
-      brands: rawBrands.map(mapBrand),
+      brands: rawBrands.map(mapBrands)
     }
-  }, [getProducts])
+  }
 
-  // ✅ Pausa SWR hasta que getProducts esté listo (evita fetcher indefinido)
-  const { data, isLoading, error, mutate } = useSWR(
-    getProducts ? "catalog" : null,
-    fetchCatalog,
-    {
-      revalidateOnFocus: false,
-      shouldRetryOnError: false,
-      onSuccess: (d) => console.log("SWR onSuccess catalog:", d),
-      onError: (e) => console.error("SWR onError catalog:", e),
-    }
-  )
+  const { data, isLoading, error } = useSWR("catalog", fetchCatalog)
 
   const products = data?.products ?? []
   const categories = data?.categories ?? []
   const brands = data?.brands ?? []
+  
+  // const fetchProducts = async () => {
+  //   const productsResponse = await getProducts()
+  //   console.log(productsResponse, 'productsResponse')
+  //   const fetchedProducts = productsResponse.products || []
+
+  //   return fetchedProducts.map((product: any) => ({
+  //     ...product,
+  //     image: product.main_image || product.images[0].url || "/placeholder.svg?height=300&width=300",
+  //   }))
+  // }
+  // const { data: products2 = [], isLoading } = useSWR('products', fetchProducts)
+
+
+  // const fetchCategories = async () => {
+  //   // const isAuthenticated = await CategoryService.ensureAuthenticated()
+  //   // console.log("User authenticated:", isAuthenticated)
+  //   // if (!isAuthenticated) return []
+
+  //   const categoriesResponse = await CategoryService.getCategories()
+  //   const fetchedCategories = categoriesResponse.data || []
+
+  //   return fetchedCategories.map((product: any) => ({
+  //     ...product,
+  //     image: product.main_image ?? "/placeholder.svg?height=300&width=300",
+  //   }))
+  // }
+  // const { data: categories = [] } = useSWR('categories', fetchCategories)
+  // Mock categories data
+  // const isLoading = false // Replace with actual loading state if using SWR
+  // const categories: Category[] = [
+  //   {
+  //     id: "ropa",
+  //     name: "Ropa",
+  //     products_count: 45,
+  //     parent: null,
+  //     subcategories: [
+  //       { id: "camisetas", name: "Camisetas", products_count: 25, parent: "ropa" },
+  //       { id: "sudaderas", name: "Sudaderas", products_count: 12, parent: "ropa" },
+  //       { id: "chaquetas", name: "Chaquetas", products_count: 8, parent: "ropa" },
+  //     ],
+  //   },
+  //   {
+  //     id: "accesorios",
+  //     name: "Accesorios",
+  //     products_count: 38,
+  //     parent: null,
+  //     subcategories: [
+  //       { id: "anillos", name: "Anillos", products_count: 15, parent: "accesorios" },
+  //       { id: "collares", name: "Collares", products_count: 10, parent: "accesorios" },
+  //       { id: "pulseras", name: "Pulseras", products_count: 8, parent: "accesorios" },
+  //       { id: "aros", name: "Aros", products_count: 5, parent: "accesorios" },
+  //     ],
+  //   },
+  //   {
+  //     id: "gorros",
+  //     name: "Gorros y Sombreros",
+  //     products_count: 18,
+  //     parent: null,
+  //     subcategories: [
+  //       { id: "snapback", name: "Snapback", products_count: 8, parent: "gorros" },
+  //       { id: "beanie", name: "Beanie", products_count: 6, parent: "gorros" },
+  //       { id: "trucker", name: "Trucker", products_count: 4, parent: "gorros" },
+  //     ],
+  //   },
+  //   {
+  //     id: "musica",
+  //     name: "Música",
+  //     products_count: 32,
+  //     parent: null,
+  //     subcategories: [
+  //       { id: "vinilos", name: "Vinilos", products_count: 15, parent: "musica" },
+  //       { id: "cds", name: "CDs", products_count: 12, parent: "musica" },
+  //       { id: "cassettes", name: "Cassettes", products_count: 5, parent: "musica" },
+  //     ],
+  //   },
+  //   {
+  //     id: "instrumentos",
+  //     name: "Instrumentos",
+  //     products_count: 24,
+  //     parent: null,
+  //     subcategories: [
+  //       { id: "guitarras", name: "Guitarras", products_count: 10, parent: "instrumentos" },
+  //       { id: "bajos", name: "Bajos", products_count: 6, parent: "instrumentos" },
+  //       { id: "baterias", name: "Baterías", products_count: 5, parent: "instrumentos" },
+  //       { id: "accesorios-inst", name: "Accesorios", products_count: 3, parent: "instrumentos" },
+  //     ],
+  //   },
+  //   {
+  //     id: "coleccionables",
+  //     name: "Coleccionables",
+  //     products_count: 16,
+  //     parent: null,
+  //     subcategories: [
+  //       { id: "parches", name: "Parches", products_count: 8, parent: "coleccionables" },
+  //       { id: "pins", name: "Pins", products_count: 5, parent: "coleccionables" },
+  //       { id: "posters", name: "Posters", products_count: 3, parent: "coleccionables" },
+  //     ],
+  //   },
+  // ]
+  
+
 
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [sortBy, setSortBy] = useState("featured")
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([])
   const [priceRange, setPriceRange] = useState("")
   const [cartItems, setCartItems] = useState(0)
   const [expandedCategories, setExpandedCategories] = useState<string[]>([])
 
+  // Fetch products using SWR
+  // console.log("Products fetched:", products)
+
+  // Mock products data
+  
+  // const products = [
+  //   {
+  //     id: 1,
+  //     name: "Anillo Demona Mort",
+  //     price: 15990,
+  //     originalPrice: 19990,
+  //     image: "/images/stock/anillo.jpg?height=400&width=400",
+  //     description: "Anillo de acero inoxidable con grabado Demona Mort, talla ajustable",
+  //     category: "anillos",
+  //     rating: 5,
+  //     reviews: 24,
+  //     is_new: true,
+  //     discount: 20,
+  //     in_stock: true,
+  //     colors: ["Negro", "Rojo", "Gris"],
+  //     sizes: ["S", "M", "L", "XL", "XXL"],
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Gorro Snapback Metal Chile",
+  //     price: 12990,
+  //     image: "/images/stock/gorro.jpg?height=400&width=400",
+  //     description: "Gorro bordada con logo metálico en relieve, ajustable",
+  //     category: "gorros",
+  //     rating: 4.8,
+  //     reviews: 18,
+  //     isFeatured: true,
+  //     in_stock: true,
+  //     colors: ["Negro", "Rojo", "Gris"],
+  //   },    
+  //   {
+  //     id: 6,
+  //     name: "Aros de Metal Fundido",
+  //     price: 3990,
+  //     image: "/images/stock/aros.jpg?height=400&width=400",
+  //     description: "Aros de metal fundido con diseño exclusivo, ligeros y resistentes",
+  //     category: "accesorios",
+  //     rating: 4.5,
+  //     reviews: 28,
+  //     in_stock: true,
+  //     material: "Aleación de zinc",
+  //   },
+  //   {
+  //     id: 7,
+  //     name: "Muñequera de Cuero con Pin",
+  //     price: 3990,
+  //     image: "/images/stock/mun_equera.jpg?height=400&width=400",
+  //     description: "Muñequera de cuero genuino con pin metálico, talla única",
+  //     category: "accesorios",
+  //     rating: 4.5,
+  //     reviews: 28,
+  //     in_stock: true,
+  //     colors: ["Negro", "Rojo", "Gris"],
+  //   },
+    
+  // ]
+
   const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory =
-      selectedCategories.length === 0 ||
-      selectedCategories.includes(product.category) ||
-      selectedCategories.includes(product.category_id) ||
-      selectedCategories.includes(product?.category?.id)
-
-    const matchesBrand =
-      selectedBrands.length === 0 ||
-      selectedBrands.includes(product.brand) ||
-      selectedBrands.includes(product.brand_id) ||
-      selectedBrands.includes(product?.brand?.id)
-
-    const price = Number(product.price ?? 0)
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(product.category)
+    const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(product.brand)
     const matchesPrice =
       priceRange === "" ||
-      priceRange === "all" ||
-      (priceRange === "0-10000" && price <= 10000) ||
-      (priceRange === "10000-20000" && price > 10000 && price <= 20000) ||
-      (priceRange === "20000-30000" && price > 20000 && price <= 30000) ||
-      (priceRange === "30000+" && price > 30000)
+      (priceRange === "0-10000" && product.price <= 10000) ||
+      (priceRange === "10000-20000" && product.price > 10000 && product.price <= 20000) ||
+      (priceRange === "20000-30000" && product.price > 20000 && product.price <= 30000) ||
+      (priceRange === "30000+" && product.price > 30000)
 
-    return Boolean(matchesSearch && matchesCategory && matchesBrand && matchesPrice)
+    return matchesSearch && matchesCategory && matchesPrice && matchesBrand
   })
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case "price-low":
-        return (a.price ?? 0) - (b.price ?? 0)
+        return a.price - b.price
       case "price-high":
-        return (b.price ?? 0) - (a.price ?? 0)
+        return b.price - a.price
       case "rating":
-        return (b.rating ?? 0) - (a.rating ?? 0)
+        return b.rating - a.rating
       case "newest":
         return (b.is_new ? 1 : 0) - (a.is_new ? 1 : 0)
       default:
@@ -130,17 +288,27 @@ export default function TiendaPage() {
     }
   })
 
-  const handleAddToCart = (product: any) => {
+  const addToCart = (productId: number) => {
     setCartItems((prev) => prev + 1)
+  }
+
+  const handleAddToCart = (product: any) => {
     addItem({
       id: product.id,
       name: product.name,
-      price: product.price ?? 0,
+      price: product.price,
       image: product.image || product.main_image || "/placeholder.svg",
+      // si tuvieras talla/color seleccionados, pásalos aquí:
+      // size: selectedSize, color: selectedColor
       quantity: 1,
     })
   }
 
+  // const toggleCategory = (categoryId: string) => {
+  //   setSelectedCategories((prev) =>
+  //     prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId],
+  //   )
+  // }
   const toggleCategory = (categoryId: string) => {
     setSelectedCategories((prev) => {
       if (prev.includes(categoryId)) {
@@ -174,7 +342,6 @@ export default function TiendaPage() {
   const getSelectedCategoriesCount = () => {
     return selectedCategories.length
   }
-
   const toggleBrand = (brandId: string) => {
     setSelectedBrands((prev) => {
       if (prev.includes(brandId)) {
@@ -250,18 +417,17 @@ export default function TiendaPage() {
                   )}
                 </label>
                 <div className="space-y-1 max-h-80 overflow-y-auto">
+                  {/* {categories.map((category) => ( */}
                   {categories.filter((category) => category.parent === null).map((category) => (
                     <div key={category.id} className="space-y-1">
+                      {/* Categoría Principal */}
                       <div className="flex items-center space-x-2 py-1">
-                        {category.subcategories &&
-                          category.subcategories.length < 1 && 
                         <Checkbox
-                              id={category.id}
-                              checked={isCategorySelected(category.id)}
-                              onCheckedChange={() => toggleCategory(category.id)}
-                              className="border-red-600 data-[state=checked]:bg-red-600"
-                            />
-                        }
+                          id={category.id}
+                          checked={isCategorySelected(category.id)}
+                          onCheckedChange={() => toggleCategory(category.id)}
+                          className="border-red-600 data-[state=checked]:bg-red-600"
+                        />
                         <button
                           onClick={() => toggleCategoryExpansion(category.id)}
                           className="flex items-center space-x-1 flex-1 text-left hover:text-red-400 transition-colors"
@@ -478,11 +644,11 @@ export default function TiendaPage() {
                               <Star
                                 key={i}
                                 className={`w-4 h-4 ${
-                                  i < Math.floor(product.rating_avg) ? "text-yellow-500 fill-current" : "text-gray-600"
+                                  i < Math.floor(product.rating) ? "text-yellow-500 fill-current" : "text-gray-600"
                                 }`}
                               />
                             ))}
-                            <span className="text-sm text-gray-400 ml-2">({product.reviews_count})</span>
+                            <span className="text-sm text-gray-400 ml-2">({product.reviews})</span>
                           </div>
                         </div>
 
@@ -559,6 +725,23 @@ export default function TiendaPage() {
                 </div>
               )
             )}
+            {/* {sortedProducts.length === 0 && (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">🤘</div>
+                <h3 className="text-2xl font-bold text-gray-300 mb-2">No se encontraron productos</h3>
+                <p className="text-gray-500 mb-6">Intenta ajustar tus filtros de búsqueda</p>
+                <Button
+                  onClick={() => {
+                    setSearchTerm("")
+                    setSelectedCategories([])
+                    setPriceRange("")
+                  }}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Limpiar Filtros
+                </Button>
+              </div>
+            )} */}
           </div>
         </div>
       </div>

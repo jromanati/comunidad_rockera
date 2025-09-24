@@ -8,15 +8,17 @@ import { ShoppingCart, Radio, Menu, X, Tv } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { RadioModal } from "@/components/radio-modal"
+import { useCart } from "@/app/store/cart"  // ⬅️ NUEVO
 
 interface HeaderProps {
   cartItems?: number
   onRadioOpen: () => void
 }
 
-export function Header({ cartItems = 0, onRadioOpen }: HeaderProps) {
+export function Header({ onRadioOpen }: HeaderProps) {
   const [isRadioOpen, setIsRadioOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { count } = useCart()  // ⬅️ conteo global
 
   return (
     <>
@@ -90,9 +92,9 @@ export function Header({ cartItems = 0, onRadioOpen }: HeaderProps) {
                   className="relative border-red-600 text-red-400 hover:bg-red-600 hover:text-white bg-transparent hover:shadow-lg hover:shadow-red-500/25 transition-all duration-300"
                 >
                   <ShoppingCart className="w-4 h-4" />
-                  {cartItems > 0 && (
+                  {count > 0 && (
                     <Badge className="absolute -top-2 -right-2 bg-red-600 text-white text-xs animate-pulse">
-                      {cartItems}
+                      {count}
                     </Badge>
                   )}
                 </Button>

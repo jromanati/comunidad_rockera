@@ -6,9 +6,13 @@ export class AuthService {
   private static tokenExpiry: number | null = null
 
   static async authenticate(): Promise<ApiResponse<AuthResponse>> {
+    // const credentials: AuthCredentials = {
+    //   username: process.env.NEXT_PUBLIC_API_USERNAME || "",
+    //   password: process.env.NEXT_PUBLIC_API_PASSWORD || "",
+    // }
     const credentials: AuthCredentials = {
-      username: process.env.NEXT_PUBLIC_API_USERNAME || "",
-      password: process.env.NEXT_PUBLIC_API_PASSWORD || "",
+      username: "comunidadmetal",
+      password: "comunidadmetal.2025",
     }
 
     if (!credentials.username || !credentials.password) {
@@ -21,9 +25,8 @@ export class AuthService {
     const response = await apiClient.post<AuthResponse>("token/", credentials)
 
     if (response.success && response.data) {
-      console.log(response.data, 'data')
       this.token = response.data.access
-      this.tokenExpiry = Date.now() + response.data.expiresIn * 1000
+      this.tokenExpiry = Date.now() + response.data.expires_in * 1000
 
       apiClient.setToken(this.token) // 👈 Asignar token a apiClient
 
@@ -34,8 +37,6 @@ export class AuthService {
   }
 
   static isTokenValid(): boolean {
-    const token = localStorage.getItem('token')
-    return this.token !== null
     return this.token !== null && this.tokenExpiry !== null && Date.now() < this.tokenExpiry
   }
 

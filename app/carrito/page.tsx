@@ -1,466 +1,363 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
-import {
-  ShoppingCart,
-  Plus,
-  Minus,
-  Trash2,
-  CreditCard,
-  Truck,
-  Shield,
-  Tag,
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Home,
-  MessageSquare,
-} from "lucide-react"
+import { Minus, Plus, Trash2, ShoppingCart, User, Mail, Phone, MapPin, Home, MessageSquare } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
+import { useCart } from "@/app/store/cart"   // ⬅️ NUEVO
+import { useState } from "react"
+import type {
+  CreateOrderPayload, CreateShippingAddress, CreateOrderItem
+} from "@/types/payment"
+import useSWR from 'swr'
+import {usePayment} from "@/hooks/use-payment"
+
+
+type CustomerData = {
+  nombre: string
+  apellido: string
+  email: string
+  telefono: string
+  ciudad: string
+  direccion: string
+  codigoPostal: string
+  comentarios: string
+}
+interface FormErrors {
+  [key: string]: string
+}
+
 export default function CarritoPage() {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Camiseta Comunidad Metal Edición Limitada",
-      price: 15990,
-      originalPrice: 19990,
-      image: "/placeholder.svg?height=200&width=200",
-      quantity: 2,
-      size: "L",
-      color: "Negro",
-    },
-    {
-      id: 2,
-      name: "Gorra Snapback Metal Chile",
-      price: 12990,
-      image: "/placeholder.svg?height=200&width=200",
-      quantity: 1,
-      color: "Negro",
-    },
-    {
-      id: 3,
-      name: "Vinilo Compilado Metal Chileno",
-      price: 25990,
-      image: "/placeholder.svg?height=200&width=200",
-      quantity: 1,
-    },
-  ])
-
-  const [promoCode, setPromoCode] = useState("")
-  const [appliedPromo, setAppliedPromo] = useState<string | null>(null)
-  const [showCheckoutForm, setShowCheckoutForm] = useState(false)
-  const [customerData, setCustomerData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    city: "",
-    address: "",
-    postalCode: "",
-    comments: "",
+  const { items, updateQty, removeItem, subtotal, clear } = useCart()
+  const [showCheckout, setShowCheckout] = useState(false)
+  const [customerData, setCustomerData] = useState<CustomerData>({
+    nombre: "", apellido: "", email: "", telefono: "", ciudad: "", direccion: "", codigoPostal: "", comentarios: "",
   })
-  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
+  const [errors, setErrors] = useState<FormErrors>({})
+  const { createOrder, isLoading } = usePayment()
+  
 
-  const updateQuantity = (id: number, newQuantity: number) => {
-    if (newQuantity === 0) {
-      removeItem(id)
-      return
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", minimumFractionDigits: 0 }).format(price)
+
+  const shipping = subtotal > 50000 ? 0 : 5990
+  const total = subtotal + shipping
+
+  const updateQuantity = (key: string, newQuantity: number) => updateQty(key, newQuantity)
+  const removeByKey = (key: string) => removeItem(key)
+
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black py-12">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-20">
+            <ShoppingCart className="w-24 h-24 text-gray-600 mx-auto mb-6" />
+            <h2 className="text-3xl font-bold text-white mb-4">Tu carrito está vacío</h2>
+            <p className="text-gray-400 mb-8">¡Agrega algunos productos increíbles de nuestra tienda!</p>
+            <Button asChild className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white px-8 py-3 text-lg">
+              <a href="/tienda">Ir a la Tienda</a>
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {}
+
+    if (!customerData.nombre.trim()) {
+      newErrors.nombre = "El nombre es obligatorio"
     }
-    setCartItems((items) => items.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item)))
-  }
 
-  const removeItem = (id: number) => {
-    setCartItems((items) => items.filter((item) => item.id !== id))
-  }
-
-  const applyPromoCode = () => {
-    if (promoCode.toLowerCase() === "metal2024") {
-      setAppliedPromo("METAL2024")
-      setPromoCode("")
+    if (!customerData.email.trim()) {
+      newErrors.email = "El email es obligatorio"
+    } else if (!/\S+@\S+\.\S+/.test(customerData.email)) {
+      newErrors.email = "El email no es válido"
     }
+
+    if (!customerData.telefono.trim()) {
+      newErrors.telefono = "El teléfono es obligatorio"
+    }
+
+    if (!customerData.ciudad.trim()) {
+      newErrors.ciudad = "La ciudad es obligatoria"
+    }
+
+    if (!customerData.direccion.trim()) {
+      newErrors.direccion = "La dirección es obligatoria"
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof CustomerData, value: string) => {
     setCustomerData((prev) => ({ ...prev, [field]: value }))
     // Limpiar error cuando el usuario empiece a escribir
-    if (formErrors[field]) {
-      setFormErrors((prev) => ({ ...prev, [field]: "" }))
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }))
     }
   }
-
-  const validateForm = () => {
-    const errors: { [key: string]: string } = {}
-
-    if (!customerData.fullName.trim()) errors.fullName = "El nombre es obligatorio"
-    if (!customerData.email.trim()) errors.email = "El email es obligatorio"
-    else if (!/\S+@\S+\.\S+/.test(customerData.email)) errors.email = "Email inválido"
-    if (!customerData.phone.trim()) errors.phone = "El teléfono es obligatorio"
-    if (!customerData.city.trim()) errors.city = "La ciudad es obligatoria"
-    if (!customerData.address.trim()) errors.address = "La dirección es obligatoria"
-
-    setFormErrors(errors)
-    return Object.keys(errors).length === 0
-  }
-
-  const handleCheckout = () => {
-    if (!showCheckoutForm) {
-      setShowCheckoutForm(true)
-      return
-    }
-
+  const handleConfirmOrder = async () => {
     if (validateForm()) {
-      // Procesar el pedido
-      console.log("Pedido confirmado:", { cartItems, customerData, total })
-      alert("¡Pedido confirmado! Recibirás un email de confirmación.")
-      // Limpiar carrito y formulario
-      setCartItems([])
-      setCustomerData({
-        fullName: "",
+      // Aquí iría la lógica para procesar el pedido
+      // CreateOrderPayload, CreateShippingAddress, CreateOrderItem
+      
+      const newShippingAddress: CreateShippingAddress = {        
+        firstName: customerData.nombre,
+        lastName: customerData.apellido,
+        email: customerData.email,
+        phone: customerData.telefono,
+        address: customerData.direccion,
+        city: customerData.ciudad,
+        region: "customerData",
+        zipCode: customerData.codigoPostal
+      }
+      const newCreateOrderItem: CreateOrderItem[] = items.map(item => ({
+        product_id: item.id || 0,
+        price: item.price,
+        quantity: item.quantity,
+      }))
+      const returnUrl = `${window.location.origin}/success`
+      const statusUrl = `${window.location.origin}/revision-orden`
+      const newCreateOrderPayload: CreateOrderPayload = {
+        items: newCreateOrderItem,
+        shippingAddress: newShippingAddress,
+        payment_method: "webpay",
+        subtotal: subtotal,
+        shippingCost: shipping,
+        total: total,
+        notes: customerData.comentarios,
+        return_url: returnUrl,
+        status_url: statusUrl,
+      }
+      const response = await createOrder(newCreateOrderPayload)
+      if (response.data_web_pay) {
+        localStorage.setItem("payment_id", response.payment_id)
+        if (response.data_web_pay.url && response.data_web_pay.token) {
+          window.location.href = `${response.data_web_pay.url}?token_ws=${response.data_web_pay.token}`
+          return
+        } else {
+          throw new Error("Respuesta inválida de Webpay")
+        }
+      }
+      /*setCustomerData({
+        nombre: "",
         email: "",
-        phone: "",
-        city: "",
-        address: "",
-        postalCode: "",
-        comments: "",
+        telefono: "",
+        ciudad: "",
+        direccion: "",
+        codigoPostal: "",
+        comentarios: "",
       })
-      setShowCheckoutForm(false)
+      setShowCheckout(false)
+      setErrors({})
+      clear()*/
     }
   }
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const discount = appliedPromo ? subtotal * 0.1 : 0
-  const shipping = subtotal > 30000 ? 0 : 3990
-  const total = subtotal - discount + shipping
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      {/* <Header cartItems={cartItems.length} /> */}
+    <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black py-12">
+      <div className="container mx-auto px-4">
+        {/* ... encabezado ... */}
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Page Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-yellow-500">
-            CARRITO DE COMPRAS
-          </h1>
-          <p className="text-xl text-gray-300">Revisa tus productos antes de finalizar</p>
-        </div>
-
-        {cartItems.length === 0 ? (
-          <div className="text-center py-16">
-            <ShoppingCart className="w-24 h-24 text-gray-600 mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-gray-300 mb-4">Tu carrito está vacío</h3>
-            <p className="text-gray-500 mb-8">¡Agrega algunos productos increíbles!</p>
-            <Link href="/tienda">
-              <Button className="bg-red-600 hover:bg-red-700 text-white font-bold text-lg px-8 py-4">
-                Ir a la Tienda
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
-            <div className="lg:col-span-2 space-y-6">
-              {cartItems.map((item) => (
-                <Card key={item.id} className="bg-gradient-to-br from-gray-900 to-black border border-red-800/30">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row gap-6">
-                      <div className="flex-shrink-0">
-                        <Image
-                          src={item.image || "/placeholder.svg"}
-                          alt={item.name}
-                          width={200}
-                          height={200}
-                          className="w-32 h-32 object-cover rounded-lg"
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h3 className="font-bold text-white text-lg mb-2">{item.name}</h3>
-                            <div className="space-y-1 text-sm text-gray-400">
-                              {item.size && <div>Talla: {item.size}</div>}
-                              {item.color && <div>Color: {item.color}</div>}
-                            </div>
-                          </div>
-                          <Button
-                            onClick={() => removeItem(item.id)}
-                            variant="ghost"
-                            size="sm"
-                            className="text-gray-400 hover:text-red-400"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <Button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              variant="outline"
-                              size="sm"
-                              className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white bg-transparent"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </Button>
-                            <span className="font-bold text-white w-8 text-center">{item.quantity}</span>
-                            <Button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              variant="outline"
-                              size="sm"
-                              className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white bg-transparent"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </Button>
-                          </div>
-
-                          <div className="text-right">
-                            <div className="text-red-500 font-bold text-xl">
-                              ${(item.price * item.quantity).toLocaleString()}
-                            </div>
-                            {item.originalPrice && (
-                              <div className="text-gray-500 line-through text-sm">
-                                ${(item.originalPrice * item.quantity).toLocaleString()}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Order Summary */}
-            <div className="space-y-6">
-              {/* Promo Code */}
-              <Card className="bg-gradient-to-br from-gray-900 to-black border border-red-800/30">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Lista */}
+          <div className="lg:col-span-2 space-y-4">
+            {items.map((item) => (
+              <Card key={item._key} className="bg-gradient-to-r from-gray-900/50 to-black/50 border-red-800/30">
                 <CardContent className="p-6">
-                  <h3 className="font-bold text-red-500 mb-4 flex items-center">
-                    <Tag className="w-5 h-5 mr-2" />
-                    CÓDIGO PROMOCIONAL
-                  </h3>
-                  {appliedPromo ? (
-                    <div className="flex items-center justify-between bg-green-900/30 border border-green-600 rounded-lg p-3">
-                      <span className="text-green-400 font-bold">{appliedPromo} aplicado</span>
-                      <Button
-                        onClick={() => setAppliedPromo(null)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-green-400 hover:text-green-300"
-                      >
-                        <Trash2 className="w-4 h-4" />
+                  <div className="flex items-center space-x-4">
+                    <Image src={item.image || "/placeholder.svg"} alt={item.name} width={100} height={100} className="rounded-lg border border-red-800/30" />
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-white mb-2">{item.name}</h3>
+                      <div className="flex items-center space-x-4 mb-3">
+                        {item.size && <Badge variant="outline" className="border-red-600 text-red-400">Talla: {item.size}</Badge>}
+                        {item.color && <Badge variant="outline" className="border-red-600 text-red-400">Color: {item.color}</Badge>}
+                      </div>
+                      <p className="text-2xl font-bold text-red-500">{formatPrice(item.price)}</p>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <Button onClick={() => updateQuantity(item._key, item.quantity - 1)} variant="outline" size="sm" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <span className="text-white font-bold text-lg w-8 text-center">{item.quantity}</span>
+                      <Button onClick={() => updateQuantity(item._key, item.quantity + 1)} variant="outline" size="sm" className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white">
+                        <Plus className="w-4 h-4" />
                       </Button>
                     </div>
-                  ) : (
-                    <div className="flex space-x-2">
-                      <Input
-                        type="text"
-                        placeholder="Ingresa tu código"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        className="bg-gray-800 border-red-800/50 text-white"
-                      />
-                      <Button onClick={applyPromoCode} className="bg-red-600 hover:bg-red-700">
-                        Aplicar
-                      </Button>
-                    </div>
-                  )}
+
+                    <Button onClick={() => removeByKey(item._key)} variant="ghost" size="sm" className="text-red-400 hover:text-red-300 hover:bg-red-950/30">
+                      <Trash2 className="w-5 h-5" />
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
+            ))}
+          </div>
 
-              {/* Order Summary */}
-              <Card className="bg-gradient-to-br from-gray-900 to-black border border-red-800/30">
-                <CardContent className="p-6">
-                  <h3 className="font-bold text-red-500 mb-6 text-xl">RESUMEN DEL PEDIDO</h3>
+          {/* Resumen */}
+          <div className="space-y-6">
+            <Card className="bg-gradient-to-br from-gray-900/80 to-black/80 border-red-800/50">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold text-red-500">Resumen del Pedido</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between text-gray-300"><span>Subtotal:</span><span className="font-bold">{formatPrice(subtotal)}</span></div>
+                <div className="flex justify-between text-gray-300"><span>Envío:</span><span className="font-bold">{shipping === 0 ? <span className="text-green-500">¡GRATIS!</span> : formatPrice(shipping)}</span></div>
+                <Separator className="bg-red-800/30" />
+                <div className="flex justify-between text-xl font-bold text-white"><span>Total:</span><span className="text-red-500">{formatPrice(total)}</span></div>
 
-                  <div className="space-y-4">
-                    <div className="flex justify-between text-gray-300">
-                      <span>Subtotal ({cartItems.reduce((sum, item) => sum + item.quantity, 0)} productos)</span>
-                      <span>${subtotal.toLocaleString()}</span>
-                    </div>
-
-                    {discount > 0 && (
-                      <div className="flex justify-between text-green-400">
-                        <span>Descuento (10%)</span>
-                        <span>-${discount.toLocaleString()}</span>
-                      </div>
-                    )}
-
-                    <div className="flex justify-between text-gray-300">
-                      <span>Envío</span>
-                      <span>{shipping === 0 ? "GRATIS" : `$${shipping.toLocaleString()}`}</span>
-                    </div>
-
-                    <Separator className="bg-red-800/50" />
-
-                    <div className="flex justify-between text-white font-bold text-xl">
-                      <span>Total</span>
-                      <span className="text-red-500">${total.toLocaleString()}</span>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleCheckout}
-                    className="w-full mt-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold text-lg py-4"
-                  >
-                    <CreditCard className="w-5 h-5 mr-2" />
-                    {showCheckoutForm ? "CONFIRMAR PEDIDO" : "PROCEDER AL PAGO"}
+                {!showCheckout ? (
+                  <Button onClick={() => setShowCheckout(true)} className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 text-lg transform hover:scale-105 transition-all duration-300">
+                    PROCEDER AL PAGO
                   </Button>
+                ) : (
+                  <Button onClick={handleConfirmOrder} className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 text-lg transform hover:scale-105 transition-all duration-300">
+                    CONFIRMAR PEDIDO
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
 
-                  {/* Checkout Form */}
-                  {showCheckoutForm && (
-                    <Card className="bg-gradient-to-br from-gray-900 to-black border border-red-800/30 mt-6">
-                      <CardContent className="p-6">
-                        <h3 className="font-bold text-red-500 mb-6 text-xl">DATOS DEL CLIENTE</h3>
-
-                        <div className="space-y-4">
-                          {/* Nombre Completo */}
-                          <div>
-                            <label className="flex items-center text-white font-bold mb-2">
-                              <User className="w-4 h-4 mr-2 text-red-500" />
-                              Nombre Completo *
-                            </label>
-                            <Input
-                              type="text"
-                              value={customerData.fullName}
-                              onChange={(e) => handleInputChange("fullName", e.target.value)}
-                              className={`bg-gray-800 border-red-800/50 text-white ${formErrors.fullName ? "border-red-500" : ""}`}
-                              placeholder="Ingresa tu nombre completo"
-                            />
-                            {formErrors.fullName && <p className="text-red-400 text-sm mt-1">{formErrors.fullName}</p>}
-                          </div>
-
-                          {/* Email */}
-                          <div>
-                            <label className="flex items-center text-white font-bold mb-2">
-                              <Mail className="w-4 h-4 mr-2 text-red-500" />
-                              Email *
-                            </label>
-                            <Input
-                              type="email"
-                              value={customerData.email}
-                              onChange={(e) => handleInputChange("email", e.target.value)}
-                              className={`bg-gray-800 border-red-800/50 text-white ${formErrors.email ? "border-red-500" : ""}`}
-                              placeholder="tu@email.com"
-                            />
-                            {formErrors.email && <p className="text-red-400 text-sm mt-1">{formErrors.email}</p>}
-                          </div>
-
-                          {/* Teléfono */}
-                          <div>
-                            <label className="flex items-center text-white font-bold mb-2">
-                              <Phone className="w-4 h-4 mr-2 text-red-500" />
-                              Teléfono *
-                            </label>
-                            <Input
-                              type="tel"
-                              value={customerData.phone}
-                              onChange={(e) => handleInputChange("phone", e.target.value)}
-                              className={`bg-gray-800 border-red-800/50 text-white ${formErrors.phone ? "border-red-500" : ""}`}
-                              placeholder="+56 9 1234 5678"
-                            />
-                            {formErrors.phone && <p className="text-red-400 text-sm mt-1">{formErrors.phone}</p>}
-                          </div>
-
-                          {/* Ciudad */}
-                          <div>
-                            <label className="flex items-center text-white font-bold mb-2">
-                              <MapPin className="w-4 h-4 mr-2 text-red-500" />
-                              Ciudad *
-                            </label>
-                            <Input
-                              type="text"
-                              value={customerData.city}
-                              onChange={(e) => handleInputChange("city", e.target.value)}
-                              className={`bg-gray-800 border-red-800/50 text-white ${formErrors.city ? "border-red-500" : ""}`}
-                              placeholder="Santiago, Valparaíso, etc."
-                            />
-                            {formErrors.city && <p className="text-red-400 text-sm mt-1">{formErrors.city}</p>}
-                          </div>
-
-                          {/* Dirección */}
-                          <div>
-                            <label className="flex items-center text-white font-bold mb-2">
-                              <Home className="w-4 h-4 mr-2 text-red-500" />
-                              Dirección *
-                            </label>
-                            <Input
-                              type="text"
-                              value={customerData.address}
-                              onChange={(e) => handleInputChange("address", e.target.value)}
-                              className={`bg-gray-800 border-red-800/50 text-white ${formErrors.address ? "border-red-500" : ""}`}
-                              placeholder="Calle, número, depto/casa"
-                            />
-                            {formErrors.address && <p className="text-red-400 text-sm mt-1">{formErrors.address}</p>}
-                          </div>
-
-                          {/* Código Postal */}
-                          <div>
-                            <label className="flex items-center text-white font-bold mb-2">
-                              <Tag className="w-4 h-4 mr-2 text-red-500" />
-                              Código Postal
-                            </label>
-                            <Input
-                              type="text"
-                              value={customerData.postalCode}
-                              onChange={(e) => handleInputChange("postalCode", e.target.value)}
-                              className="bg-gray-800 border-red-800/50 text-white"
-                              placeholder="1234567 (opcional)"
-                            />
-                          </div>
-
-                          {/* Comentarios */}
-                          <div>
-                            <label className="flex items-center text-white font-bold mb-2">
-                              <MessageSquare className="w-4 h-4 mr-2 text-red-500" />
-                              Comentarios Adicionales
-                            </label>
-                            <textarea
-                              value={customerData.comments}
-                              onChange={(e) => handleInputChange("comments", e.target.value)}
-                              className="w-full bg-gray-800 border border-red-800/50 text-white rounded-md px-3 py-2 min-h-[80px] resize-none"
-                              placeholder="Instrucciones especiales de entrega, referencias, etc."
-                            />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Shipping Info */}
-                  <div className="mt-6 space-y-3 text-sm text-gray-400">
-                    <div className="flex items-center space-x-2">
-                      <Truck className="w-4 h-4 text-red-500" />
-                      <span>Envío gratis en compras sobre $30.000</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Shield className="w-4 h-4 text-red-500" />
-                      <span>Compra 100% segura</span>
-                    </div>
+            {/* Formulario (igual que el tuyo) */}
+            {showCheckout && (
+              <Card className="bg-gradient-to-br from-gray-900/80 to-black/80 border-red-800/50">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold text-red-500">Datos del Cliente</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nombre" className="text-white flex items-center">
+                      <User className="w-4 h-4 mr-2" />
+                      Nombre Completo *
+                    </Label>
+                    <Input
+                      id="nombre"
+                      value={customerData.nombre}
+                      onChange={(e) => handleInputChange("nombre", e.target.value)}
+                      className="bg-gray-800/50 border-red-800/30 text-white focus:border-red-500"
+                      placeholder="Tu nombre completo"
+                    />
+                    {errors.nombre && <p className="text-red-400 text-sm">{errors.nombre}</p>}
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="apellido" className="text-white flex items-center">
+                      <User className="w-4 h-4 mr-2" />
+                      Apellido Completo *
+                    </Label>
+                    <Input
+                      id="apellido"
+                      value={customerData.apellido}
+                      onChange={(e) => handleInputChange("apellido", e.target.value)}
+                      className="bg-gray-800/50 border-red-800/30 text-white focus:border-red-500"
+                      placeholder="Tu apellido completo"
+                    />
+                    {errors.apellido && <p className="text-red-400 text-sm">{errors.apellido}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-white flex items-center">
+                      <Mail className="w-4 h-4 mr-2" />
+                      Email *
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={customerData.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      className="bg-gray-800/50 border-red-800/30 text-white focus:border-red-500"
+                      placeholder="tu@email.com"
+                    />
+                    {errors.email && <p className="text-red-400 text-sm">{errors.email}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="telefono" className="text-white flex items-center">
+                      <Phone className="w-4 h-4 mr-2" />
+                      Teléfono *
+                    </Label>
+                    <Input
+                      id="telefono"
+                      value={customerData.telefono}
+                      onChange={(e) => handleInputChange("telefono", e.target.value)}
+                      className="bg-gray-800/50 border-red-800/30 text-white focus:border-red-500"
+                      placeholder="+56 9 1234 5678"
+                    />
+                    {errors.telefono && <p className="text-red-400 text-sm">{errors.telefono}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="ciudad" className="text-white flex items-center">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      Ciudad *
+                    </Label>
+                    <Input
+                      id="ciudad"
+                      value={customerData.ciudad}
+                      onChange={(e) => handleInputChange("ciudad", e.target.value)}
+                      className="bg-gray-800/50 border-red-800/30 text-white focus:border-red-500"
+                      placeholder="Santiago, Valparaíso, etc."
+                    />
+                    {errors.ciudad && <p className="text-red-400 text-sm">{errors.ciudad}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="direccion" className="text-white flex items-center">
+                      <Home className="w-4 h-4 mr-2" />
+                      Dirección *
+                    </Label>
+                    <Input
+                      id="direccion"
+                      value={customerData.direccion}
+                      onChange={(e) => handleInputChange("direccion", e.target.value)}
+                      className="bg-gray-800/50 border-red-800/30 text-white focus:border-red-500"
+                      placeholder="Calle, número, comuna"
+                    />
+                    {errors.direccion && <p className="text-red-400 text-sm">{errors.direccion}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="codigoPostal" className="text-white">
+                      Código Postal
+                    </Label>
+                    <Input
+                      id="codigoPostal"
+                      value={customerData.codigoPostal}
+                      onChange={(e) => handleInputChange("codigoPostal", e.target.value)}
+                      className="bg-gray-800/50 border-red-800/30 text-white focus:border-red-500"
+                      placeholder="1234567"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="comentarios" className="text-white flex items-center">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Comentarios Adicionales
+                    </Label>
+                    <Textarea
+                      id="comentarios"
+                      value={customerData.comentarios}
+                      onChange={(e) => handleInputChange("comentarios", e.target.value)}
+                      className="bg-gray-800/50 border-red-800/30 text-white focus:border-red-500"
+                      placeholder="Instrucciones especiales para la entrega..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <p className="text-sm text-gray-400">* Campos obligatorios</p>
                 </CardContent>
               </Card>
-
-              {/* Continue Shopping */}
-              <Link href="/tienda">
-                <Button
-                  variant="outline"
-                  className="w-full border-red-600 text-red-400 hover:bg-red-600 hover:text-white bg-transparent"
-                >
-                  Continuar Comprando
-                </Button>
-              </Link>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

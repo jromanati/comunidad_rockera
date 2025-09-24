@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -19,6 +19,8 @@ import {
 } from "lucide-react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { useStreaming } from "@/hooks/use-streaming"
+import type {ScheduledStream} from "@/services/streaming.service"
 
 interface Video {
   id: string
@@ -38,6 +40,22 @@ interface UpcomingShow {
   description: string
 }
 
+interface PastStream {
+  id: string
+  title: string
+  description: string
+  date: Date
+  duration: number
+  viewers: number
+  sales: number
+  stream_url: string
+  recordingUrl?: string
+  isActive: boolean
+  imageUrl?: string
+}
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+
 export default function ComunidadMetalTV() {
   const [isLive, setIsLive] = useState(false)
   const [videoId, setVideoId] = useState<string | null>(null)
@@ -47,119 +65,126 @@ export default function ComunidadMetalTV() {
   const [loading, setLoading] = useState(true)
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
   const [currentView, setCurrentView] = useState<"live" | "previous">("live")
+  const { getStreamings } = useStreaming()
+  const [scheduledStreams, setScheduledStreams] = useState<ScheduledStream[]>([])
+  const [pastStreams, setPastStreams] = useState<PastStream[]>([])
+  const mapStream = (scheduled_stream: any) => {
+    const parts = scheduled_stream.scheduled_date.split(",").map((p: string) => parseInt(p.trim(), 10))
+    const [year, month, day, hour, minute] = parts
+
+    return {
+      ...scheduled_stream,
+      scheduledDate: new Date(year, month - 1, day, hour, minute),
+    }
+  }
+  const formatDateForUI = (d: Date | string | number) => {
+    return format(new Date(d), "PPP", { locale: es })
+  }
+  const formatHourForUI = (d: Date | string | number) => {
+    return format(new Date(d), "HH:mm", { locale: es })
+  }
+  const fetchedStreamConfig = async (): Promise<void> => {
+    const response = await getStreamings()
+    setScheduledStreams(response.data.scheduled_stream_data.map(mapStream))
+    setPastStreams(response.data.past_stream_data.map(mapStream))
+    setPreviousVideos(response.data.past_stream_data.map(mapStream))
+    console.log("Streaming config:", response.data.scheduled_stream_data.map(mapStream))
+    setUpcomingShows(response.data.scheduled_stream_data.map(mapStream))
+    setLoading(false)
+  }
+  useEffect(() => {
+    fetchedStreamConfig();
+  }, [])
 
   // ID del streaming en vivo - cuando tenga valor, mostrará el chat
-  // const id_streaming_live = null // Aquí irá el ID cuando haya transmisión en vivo
-  const id_streaming_live = 'AtkyJ92pxxo'
+  const id_streaming_live = null // Aquí irá el ID cuando haya transmisión en vivo
+  // const id_streaming_live = 'AtkyJ92pxxo'
   const CHANNEL_ID = "UCS1sW2a3JbvQxscSYPVvBug"
   const API_KEY = "AIzaSyCXJRm3kM2wg_NazUf2fcFGNhXimSOlrUc"
-  /* 
-    useEffect(() => {
-      const fetchLiveVideoId = async () => {
-        try {
-          const res = await fetch(
-            `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&type=video&eventType=live&key=${API_KEY}`
-          )
-          const data = await res.json()
-          if (data.items && data.items.length > 0) {
-            const id = 'kXgOoBQlPow'
-            setVideoId(id)
-            setIsLive(true)
-          } else {
-            setIsLive(false)
-          }
-        } catch (error) {
-          console.error("Error fetching YouTube live stream", error)
-          setIsLive(false)
-        }
-      }
+  
+  // useEffect(() => {
+  //   const fetchChannelData = async () => {
+  //     try {
+  //       setLoading(true)
 
-      fetchLiveVideoId()
-    }, [])
-  */
-  useEffect(() => {
-    const fetchChannelData = async () => {
-      try {
-        setLoading(true)
+  //       // Simular datos de videos anteriores
+  //       const mockPreviousVideos: Video[] = [
+  //         {
+  //           id: "kXgOoBQlPow",
+  //           title: "Metal Chileno Showcase - Pentagram Chile en Vivo",
+  //           thumbnail: "/placeholder.svg?height=180&width=320&text=Pentagram+Chile",
+  //           publishedAt: "2024-01-15",
+  //           duration: "1:45:30",
+  //           viewCount: "15,420",
+  //           description:
+  //             "Especial dedicado a Pentagram Chile, pioneros del metal chileno. Incluye entrevista exclusiva con los miembros originales y presentación de sus clásicos más emblemáticos.",
+  //         },
+  //         {
+  //           id: "pu3uH3IEAa4",
+  //           title: "Entrevista Exclusiva - Criminal Band",
+  //           thumbnail: "/placeholder.svg?height=180&width=320&text=Criminal+Interview",
+  //           publishedAt: "2024-01-12",
+  //           duration: "45:20",
+  //           viewCount: "8,750",
+  //           description:
+  //             "Conversación íntima con Criminal, una de las bandas más influyentes del thrash metal chileno. Hablan sobre su trayectoria internacional y nuevos proyectos.",
+  //         },
+  //       ]
 
-        // Simular datos de videos anteriores
-        const mockPreviousVideos: Video[] = [
-          {
-            id: "kXgOoBQlPow",
-            title: "Metal Chileno Showcase - Pentagram Chile en Vivo",
-            thumbnail: "/placeholder.svg?height=180&width=320&text=Pentagram+Chile",
-            publishedAt: "2024-01-15",
-            duration: "1:45:30",
-            viewCount: "15,420",
-            description:
-              "Especial dedicado a Pentagram Chile, pioneros del metal chileno. Incluye entrevista exclusiva con los miembros originales y presentación de sus clásicos más emblemáticos.",
-          },
-          {
-            id: "pu3uH3IEAa4",
-            title: "Entrevista Exclusiva - Criminal Band",
-            thumbnail: "/placeholder.svg?height=180&width=320&text=Criminal+Interview",
-            publishedAt: "2024-01-12",
-            duration: "45:20",
-            viewCount: "8,750",
-            description:
-              "Conversación íntima con Criminal, una de las bandas más influyentes del thrash metal chileno. Hablan sobre su trayectoria internacional y nuevos proyectos.",
-          },
-        ]
+  //       // Simular próximas transmisiones
+  //       const mockUpcomingShows: UpcomingShow[] = [
+  //         {
+  //           time: "20:00",
+  //           show: "Metal Chileno en Vivo",
+  //           band: "Necrosis",
+  //           date: "2024-01-20",
+  //           description: "Especial dedicado a la banda pionera del death metal chileno",
+  //         },
+  //         {
+  //           time: "21:30",
+  //           show: "Entrevista Exclusiva",
+  //           band: "Atomic Aggressor",
+  //           date: "2024-01-22",
+  //           description: "Conversamos con los veteranos del thrash metal nacional",
+  //         },
+  //         {
+  //           time: "19:00",
+  //           show: "Concierto Completo",
+  //           band: "Mar de Grises",
+  //           date: "2024-01-25",
+  //           description: "Presentación completa de su último álbum",
+  //         },
+  //         {
+  //           time: "22:00",
+  //           show: "Metal Internacional",
+  //           band: "Tributo a Iron Maiden",
+  //           date: "2024-01-27",
+  //           description: "Las mejores bandas tributo de Chile",
+  //         },
+  //       ]
 
-        // Simular próximas transmisiones
-        const mockUpcomingShows: UpcomingShow[] = [
-          {
-            time: "20:00",
-            show: "Metal Chileno en Vivo",
-            band: "Necrosis",
-            date: "2024-01-20",
-            description: "Especial dedicado a la banda pionera del death metal chileno",
-          },
-          {
-            time: "21:30",
-            show: "Entrevista Exclusiva",
-            band: "Atomic Aggressor",
-            date: "2024-01-22",
-            description: "Conversamos con los veteranos del thrash metal nacional",
-          },
-          {
-            time: "19:00",
-            show: "Concierto Completo",
-            band: "Mar de Grises",
-            date: "2024-01-25",
-            description: "Presentación completa de su último álbum",
-          },
-          {
-            time: "22:00",
-            show: "Metal Internacional",
-            band: "Tributo a Iron Maiden",
-            date: "2024-01-27",
-            description: "Las mejores bandas tributo de Chile",
-          },
-        ]
+  //       setPreviousVideos(mockPreviousVideos)
+  //       setUpcomingShows(mockUpcomingShows)
 
-        setPreviousVideos(mockPreviousVideos)
-        setUpcomingShows(mockUpcomingShows)
+  //       // Verificar si hay transmisión en vivo
+  //       if (id_streaming_live) {
+  //         setVideoId(id_streaming_live)
+  //         setIsLive(true)
+  //         setCurrentView("live")
+  //       } else {
+  //         setIsLive(false)
+  //         setVideoId(null)
+  //         setCurrentView("previous")
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching channel data:", error)
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
 
-        // Verificar si hay transmisión en vivo
-        if (id_streaming_live) {
-          setVideoId(id_streaming_live)
-          setIsLive(true)
-          setCurrentView("live")
-        } else {
-          setIsLive(false)
-          setVideoId(null)
-          setCurrentView("previous")
-        }
-      } catch (error) {
-        console.error("Error fetching channel data:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchChannelData()
-  }, [id_streaming_live])
+  //   fetchChannelData()
+  // }, [id_streaming_live])
 
   useEffect(() => {
     // Simular cambio de viewers solo si hay transmisión en vivo
@@ -310,10 +335,9 @@ export default function ComunidadMetalTV() {
             </Button>
           </div>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Video Player */}
-          <div className={`${currentView === "live" && id_streaming_live ? "lg:col-span-3" : "lg:col-span-4"}`}>
+          <div className="lg:col-span-4">
             <Card className="bg-gradient-to-br from-gray-900 to-black border-2 border-red-800 overflow-hidden">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
@@ -335,53 +359,30 @@ export default function ComunidadMetalTV() {
                     )}
                   </div>
                   <div className="flex items-center space-x-2">
-                    {currentView === "live" && isLive && (
-                      <>
-                        <Badge className="bg-red-600 text-white animate-pulse">LIVE</Badge>
-                        <Badge variant="outline" className="border-red-600 text-red-400">
-                          HD
-                        </Badge>
-                      </>
-                    )}
                     {selectedVideo && (
                       <div className="flex items-center space-x-2 text-sm text-gray-400">
-                        <span>{formatDate(selectedVideo.publishedAt)}</span>
+                        <span>{formatDateForUI(selectedVideo.scheduledDate)}</span>
                         <span>•</span>
-                        <span>{formatViewCount(selectedVideo.viewCount)} vistas</span>
+                        <span>{selectedVideo.viewers} vistas</span>
                         <span>•</span>
                         <span>{selectedVideo.duration}</span>
                       </div>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white bg-transparent"
-                      onClick={() => {
-                        const videoId = getCurrentVideoId()
-                        if (videoId) {
-                          window.open(`https://youtube.com/watch?v=${videoId}`, "_blank")
-                        } else {
-                          window.open(`https://youtube.com/channel/${CHANNEL_ID}`, "_blank")
-                        }
-                      }}
-                    >
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Ver en YouTube
-                    </Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="aspect-video">
-                  {getCurrentVideoId() ? (
+                  {selectedVideo ? (
                     <iframe
-                      src={`https://www.youtube.com/embed/${getCurrentVideoId()}?autoplay=1&mute=0`}
+                      src={`${selectedVideo.stream_url}`}
                       width="100%"
                       height="100%"
                       className="w-full h-full border-0"
                       allowFullScreen
                       title={getCurrentVideoTitle()}
                     />
+                    // src={`https://player.streaminghd.cl/embed/2421af72268a87fbce2427d7`}
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
                       <div className="text-center">
@@ -427,32 +428,6 @@ export default function ComunidadMetalTV() {
               </Card>
             )}
           </div>
-
-          {/* Chat - Solo mostrar si hay transmisión en vivo y estamos en vista live */}
-          {currentView === "live" && id_streaming_live && (
-            <div className="space-y-6">
-              <Card className="bg-gradient-to-br from-gray-900 to-black border border-red-800/50">
-                <CardHeader>
-                  <CardTitle className="text-lg text-red-500 flex items-center">
-                    <MessageCircle className="w-5 h-5 mr-2" />
-                    Chat en Vivo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-gray-900 rounded-lg p-2 shadow-inner border border-red-800">
-                    <iframe
-                      // src={`https://www.youtube.com/live_chat?v=${id_streaming_live}&embed_domain=localhost`}
-                      src={`https://www.youtube.com/live_chat?v=${videoId}&embed_domain=maqueta-comunidad-rockera.vercel.app`}
-                      width="100%"
-                      height="400"
-                      className="w-full h-[400px] border-none rounded-md"
-                      title="Chat en Vivo"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
         </div>
 
         {/* Transmisiones Anteriores - Solo mostrar si estamos en vista previous */}
@@ -475,7 +450,7 @@ export default function ComunidadMetalTV() {
                   <CardContent className="p-0">
                     <div className="relative">
                       <img
-                        src={video.thumbnail || "/placeholder.svg"}
+                        src={video.url || "/placeholder.svg"}
                         alt={video.title}
                         className="w-full h-48 object-cover rounded-t-lg"
                       />
@@ -498,8 +473,8 @@ export default function ComunidadMetalTV() {
                     <div className="p-4">
                       <h3 className="font-bold text-white text-sm mb-2 line-clamp-2">{video.title}</h3>
                       <div className="flex items-center justify-between text-xs text-gray-400">
-                        <span>{formatDate(video.publishedAt)}</span>
-                        <span>{formatViewCount(video.viewCount)} vistas</span>
+                        <span>{formatDateForUI(video.scheduledDate)}</span>
+                        <span>{video.viewers} vistas</span>
                       </div>
                     </div>
                   </CardContent>
@@ -523,12 +498,11 @@ export default function ComunidadMetalTV() {
                   <div className="flex items-start space-x-4">
                     <div className="text-center bg-red-600 rounded-lg p-3 min-w-[80px]">
                       <Clock className="w-5 h-5 text-white mx-auto mb-1" />
-                      <div className="text-sm font-bold text-white">{show.time}</div>
-                      <div className="text-xs text-red-200">{formatDate(show.date)}</div>
+                      <div className="text-sm font-bold text-white">{formatHourForUI(show.scheduledDate)}</div>
+                      <div className="text-xs text-red-200">{formatDateForUI(show.scheduledDate)}</div>
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-white text-lg mb-1">{show.show}</h3>
-                      <p className="text-red-400 font-semibold mb-2">{show.band}</p>
+                      <h3 className="font-bold text-white text-lg mb-1">{show.title}</h3>
                       <p className="text-gray-400 text-sm">{show.description}</p>
                     </div>
                   </div>

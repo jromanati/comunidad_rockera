@@ -21,13 +21,14 @@ class ApiClient {
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
+    const token = localStorage.getItem('token')
     try {
       const url = `${this.baseUrl}${endpoint}`
 
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         Accept: "application/json",
-        ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options.headers || {}),
       }
 
@@ -82,4 +83,5 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient(API_BASE_URL)
+// export const apiClient = new ApiClient(API_BASE_URL)
+export const apiClient = new ApiClient("https://comunidadmetal.sitios.softwarelabs.cl/api/")

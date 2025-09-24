@@ -8,18 +8,10 @@ import "./globals.css"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { RadioModal } from "@/components/radio-modal"
+import { CartProvider } from "@/app/store/cart"
 
-
-export default function ClientLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const [isRadioOpen, setIsRadioOpen] = useState(false)
-  const [cartItems, setCartItems] = useState(0)
-  const addToCart = (productId: number) => {
-    setCartItems((prev) => prev + 1)
-  }
 
   return (
     <html lang="es">
@@ -27,21 +19,20 @@ export default function ClientLayout({
         <title>Comunidad Metal - La Comunidad la hacemos todos</title>
         <meta name="description" content="La plataforma líder de la música metalera en Chile" />
         <style>{`
-html {
-  font-family: ${GeistSans.style.fontFamily};
-  --font-sans: ${GeistSans.variable};
-  --font-mono: ${GeistMono.variable};
-}
+          html {
+            font-family: ${GeistSans.style.fontFamily};
+            --font-sans: ${GeistSans.variable};
+            --font-mono: ${GeistMono.variable};
+          }
         `}</style>
       </head>
       <body className="min-h-screen bg-black text-white">
-        
-        <Header onRadioOpen={() => setIsRadioOpen(true)} cartItems={cartItems.length} />
-        <main className="flex-1">{children}</main>
-        <Footer />
-
-        {/* Radio Modal Global - Presente en todas las páginas */}
-        <RadioModal isOpen={isRadioOpen} onClose={() => setIsRadioOpen(false)} />
+        <CartProvider>
+          <Header onRadioOpen={() => setIsRadioOpen(true)} />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <RadioModal isOpen={isRadioOpen} onClose={() => setIsRadioOpen(false)} />
+        </CartProvider>
       </body>
     </html>
   )
