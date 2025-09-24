@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { Suspense, useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -19,13 +19,13 @@ import {
   Clock,
   Truck,
   ArrowLeft,
-  Download,
   Star
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import {usePayment} from "@/hooks/use-payment"
+import { usePayment } from "@/hooks/use-payment"
 
+// Interfaces
 interface CartItem {
   id: number
   name: string
@@ -34,6 +34,9 @@ interface CartItem {
   image: string
   size?: string
   color?: string
+  // extras que usas en el render
+  main_image?: string
+  product_name?: string
 }
 
 interface CustomerData {
@@ -57,169 +60,96 @@ interface OrderSummary {
 interface OrderData extends OrderSummary {
   order_number: string
   created_at: string
-  status: "processing" | "confirmed" | "shipped" | "delivered"
+  status: "processing" | "confirmed" | "shipped" | "delivered" | "approved"
   tracking_number?: string
   estimatedDelivery?: string
   paymentMethod: string
   transaction_id: string
+  payments?: { status: "processing" | "approved" | "shipped" | "delivered" }
+  all_reviews?: unknown
 }
 
+// 1) Wrapper con Suspense — default export
 export default function RevisionOrdenPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black text-white flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500" />
+        </div>
+      }
+    >
+      <RevisionOrdenContent />
+    </Suspense>
+  )
+}
+
+// 2) Tu contenido real
+function RevisionOrdenContent() {
   const [orderData, setOrderData] = useState<OrderData | null>(null)
+  const [error, setError] = useState<boolean>(false)
+
   const searchParams = useSearchParams()
   const orderId = searchParams.get("orderId")
-  const { getOrder, isLoading } = usePayment()
-  const [error, setError] = useState<boolean | null>(false)
+
+  const { getOrder } = usePayment()
+
   useEffect(() => {
     const loadOrder = async () => {
-      localStorage.setItem('order_data', null)
+      localStorage.removeItem("order_data")
       if (orderId) {
-        // const orderData = await getOrder(orderId)
-        const orderData = await getOrder(orderId)
-        if (orderData) {
-          console.log(orderData.all_reviews)
-          setOrderData(orderData)
-          localStorage.setItem("order_data", JSON.stringify(orderData))
+        const data = await getOrder(orderId)
+        if (data) {
+          setOrderData(data)
+          localStorage.setItem("order_data", JSON.stringify(data))
         } else {
           setError(true)
-          // setTimeout(() => router.push("/"), 3000)
         }
+      } else {
+        setError(true)
       }
     }
     loadOrder()
-  }, [orderId])
+  }, [orderId, getOrder])
 
-/*
-  useEffect(() => {
-    // Simular datos de la orden procesada
-    const mockOrderData: OrderData = {
-      order_number: "ORD-2024-001234",
-      created_at: "15 de Enero, 2024 - 14:30",
-      status: "shipped",
-      tracking_number: "CC123456789CL",
-      // estimatedDelivery: "18 de Enero, 2024",
-      paymentMethod: "WebPay Plus",
-      transaction_id: "TXN789456123",
-      items: [
-        {
-          id: 1,
-          name: "Camiseta Iron Maiden - The Trooper",
-          price: 25990,
-          quantity: 2,
-          image: "/placeholder.svg?height=100&width=100&text=Iron+Maiden",
-          size: "L",
-          color: "Negro",
-        },
-        {
-          id: 2,
-          name: "Vinilo Metallica - Master of Puppets",
-          price: 35990,
-          quantity: 1,
-          image: "/placeholder.svg?height=100&width=100&text=Metallica",
-        },
-        {
-          id: 3,
-          name: "Parche Pentagram Chile",
-          price: 8990,
-          quantity: 3,
-          image: "/placeholder.svg?height=100&width=100&text=Pentagram",
-        },
-      ],
-      shipping_address: {
-        first_name: "Juan Pérez Metalero",
-        email: "juan.metalero@email.com",
-        phone: "+56 9 1234 5678",
-        city: "Santiago",
-        address: "Av. Libertador Bernardo O'Higgins 1234, Santiago Centro",
-        zip_code: "8320000"
-      },
-      notes: "Por favor tocar el timbre, vivo en el segundo piso.",
-      subtotal: 87960,
-      shipping_cost: 0,
-      total: 87960,
-    }
-    setOrderData(mockOrderData)
-  }, [])*/
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("es-CL", {
-      style: "currency",
-      currency: "CLP",
-      minimumFractionDigits: 0,
-    }).format(price)
-  }
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", minimumFractionDigits: 0 }).format(price)
 
   const getStatusInfo = (status: string) => {
     switch (status) {
       case "processing":
-        return {
-          label: "Procesando",
-          color: "bg-yellow-500",
-          icon: Clock,
-          description: "Tu pedido está siendo procesado",
-        }
+        return { label: "Procesando", color: "bg-yellow-500", icon: Clock, description: "Tu pedido está siendo procesado" }
       case "approved":
-        return {
-          label: "Confirmado",
-          color: "bg-blue-500",
-          icon: CheckCircle,
-          description: "Tu pedido ha sido confirmado y está siendo preparado",
-        }
+        return { label: "Confirmado", color: "bg-blue-500", icon: CheckCircle, description: "Tu pedido ha sido confirmado y está siendo preparado" }
       case "shipped":
-        return {
-          label: "Enviado",
-          color: "bg-green-500",
-          icon: Truck,
-          description: "Tu pedido está en camino",
-        }
+        return { label: "Enviado", color: "bg-green-500", icon: Truck, description: "Tu pedido está en camino" }
       case "delivered":
-        return {
-          label: "Entregado",
-          color: "bg-green-600",
-          icon: Package,
-          description: "Tu pedido ha sido entregado",
-        }
+        return { label: "Entregado", color: "bg-green-600", icon: Package, description: "Tu pedido ha sido entregado" }
       default:
-        return {
-          label: "Desconocido",
-          color: "bg-gray-500",
-          icon: Clock,
-          description: "Estado desconocido",
-        }
+        return { label: "Desconocido", color: "bg-gray-500", icon: Clock, description: "Estado desconocido" }
     }
   }
 
   if (!orderData && !error) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500" />
       </div>
     )
   }
 
-  if (error) {
+  if (error || !orderData) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center px-6">
         <div className="max-w-md text-center py-12 px-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur">
           <div className="text-6xl mb-4">🤘</div>
           <h3 className="text-2xl font-bold mb-2">No encontramos tu orden</h3>
-          <p className="text-gray-400 mb-6">
-            Puede que el enlace haya expirado o que el número de orden sea incorrecto.
-          </p>
+          <p className="text-gray-400 mb-6">Puede que el enlace haya expirado o que el número de orden sea incorrecto.</p>
           <Link
             href="/tienda"
-            className="inline-flex items-center gap-2 rounded-lg bg-white text-black px-5 py-2.5 font-medium hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-white/40 transition"
+            className="inline-flex items-center gap-2 rounded-lg bg-white text-black px-5 py-2.5 font-medium hover:bg-gray-100 transition"
           >
             Ir a la tienda
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              className="w-5 h-5"
-              fill="currentColor"
-            >
-              <path d="M13.5 5.5a1 1 0 1 1 1.4-1.4l6 6a1 1 0 0 1 0 1.4l-6 6a1 1 0 1 1-1.4-1.4L17.59 12l-4.09-4.5Z"></path>
-              <path d="M3 12a1 1 0 0 1 1-1h12.59l-2.8-3.08a1 1 0 1 1 1.46-1.36l4.5 4.95a1 1 0 0 1 0 1.38l-4.5 4.95a1 1 0 1 1-1.46-1.36L16.59 13H4a1 1 0 0 1-1-1Z"></path>
-            </svg>
           </Link>
         </div>
       </div>
@@ -232,43 +162,19 @@ export default function RevisionOrdenPage() {
   const getPaymentStatusInfo = (status: string) => {
     switch (status) {
       case "processing":
-        return {
-          label: "Procesando",
-          color: "bg-yellow-500",
-          icon: Clock,
-          description: "Tu pago está siendo procesado",
-        }
+        return { label: "Procesando", color: "bg-yellow-500", icon: Clock }
       case "approved":
-        return {
-          label: "Pago Confirmado",
-          color: "bg-blue-500",
-          icon: CheckCircle,
-          description: "Tu pedido ha sido confirmado",
-        }
+        return { label: "Pago Confirmado", color: "bg-blue-500", icon: CheckCircle }
       case "shipped":
-        return {
-          label: "Enviado",
-          color: "bg-green-500",
-          icon: Truck,
-          description: "Tu pedido está en camino",
-        }
+        return { label: "Enviado", color: "bg-green-500", icon: Truck }
       case "delivered":
-        return {
-          label: "Entregado",
-          color: "bg-green-600",
-          icon: Package,
-          description: "Tu pedido ha sido entregado",
-        }
+        return { label: "Entregado", color: "bg-green-600", icon: Package }
       default:
-        return {
-          label: "Desconocido",
-          color: "bg-gray-500",
-          icon: Clock,
-          description: "Estado desconocido",
-        }
+        return { label: "Desconocido", color: "bg-gray-500", icon: Clock }
     }
   }
-  const paymentStatusInfo = getPaymentStatusInfo(orderData.payments.status)
+
+  const paymentStatusInfo = getPaymentStatusInfo(orderData.payments?.status ?? "processing")
   const PaymentStatusIcon = paymentStatusInfo.icon
 
   return (
