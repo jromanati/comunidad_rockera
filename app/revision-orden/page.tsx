@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState, useEffect } from "react"
+import { Suspense, useEffect, useMemo, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -90,27 +90,50 @@ function RevisionOrdenContent() {
   const [error, setError] = useState<boolean>(false)
 
   const searchParams = useSearchParams()
-  const orderId = searchParams.get("orderId")
+  const orderId = useMemo(() => searchParams.get("orderId"), [searchParams])
 
   const { getOrder } = usePayment()
 
+  // 1) mantener una referencia estable a getOrder
+  const getOrderRef = useRef(getOrder)
   useEffect(() => {
-    const loadOrder = async () => {
-      localStorage.removeItem("order_data")
-      if (orderId) {
-        const data = await getOrder(orderId)
+    getOrderRef.current = getOrder
+  }, [getOrder])
+
+  // 2) evitar llamadas repetidas para el mismo orderId
+  const fetchedForIdRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!orderId) {
+      setError(true)
+      return
+    }
+
+    // si ya buscamos este mismo orderId, no repitas
+    if (fetchedForIdRef.current === orderId) return
+    fetchedForIdRef.current = orderId
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        localStorage.removeItem("order_data")
+        const data = await getOrderRef.current(orderId)
+        if (cancelled) return
         if (data) {
           setOrderData(data)
           localStorage.setItem("order_data", JSON.stringify(data))
         } else {
           setError(true)
         }
-      } else {
-        setError(true)
+      } catch (e) {
+        if (!cancelled) setError(true)
       }
+    })()
+
+    return () => {
+      cancelled = true
     }
-    loadOrder()
-  }, [orderId, getOrder])
+  }, [orderId]) // <-- ojo: SOLO depende de orderId
 
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("es-CL", { style: "currency", currency: "CLP", minimumFractionDigits: 0 }).format(price)
