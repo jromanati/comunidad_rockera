@@ -27,31 +27,31 @@ import { Footer } from "@/components/footer"
 export default function QuienesSomosPage() {
   const teamMembers = [
     {
-      name: "Alex Rodriguez",
+      name: "Cesar Espinoza",
       role: "Fundador & Director",
       description: "Metalero desde los 90s, creador de la comunidad",
-      image: "/images/yo_metal.png?height=300&width=300",
+      image: "/images/cesar.png?height=300&width=300",
       specialty: "Death Metal",
     },
     {
-      name: "Ozzy Gonzalez",
+      name: "Diego Sanchez",
       role: "Community Manager",
       description: "Encargado de redes sociales y contenido",
-      image: "/images/ozzy.png?height=300&width=300",
+      image: "/images/diego.png?height=300&width=300",
       specialty: "Black Metal",
     },
     {
-      name: "James Mendez",
-      role: "DJ & Locutor",
-      description: "Voz oficial de Radio Comunidad Metal",
-      image: "/images/jame.png?height=300&width=300",
+      name: "Isabel Fouere",
+      role: "Diseñadora",
+      description: "Creadora del contenido visual y merchandising",
+      image: "/images/isabel.png?height=300&width=300",
       specialty: "Thrash Metal",
     },
     {
-      name: "Sofia Torres",
-      role: "Diseñadora",
-      description: "Creadora del contenido visual y merchandising",
-      image: "/images/amy.png?height=300&width=300",
+      name: "Diego Rojas",
+      role: "DJ & Locutor",
+      description: "Voz oficial de Radio Comunidad Metal",
+      image: "/images/diego_rojas.png?height=300&width=300",
       specialty: "Progressive Metal",
     },
   ]
