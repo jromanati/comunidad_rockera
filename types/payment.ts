@@ -50,6 +50,9 @@ export interface CreateOrderResponse {
 export interface PaymentStatus {
   paymentId: string
   orderId: string
+  provider_response?: {
+    status: "pending" | "approved" | "rejected" | "cancelled"
+  }
   status: "pending" | "approved" | "rejected" | "cancelled"
   transactionId?: string
   amount: number

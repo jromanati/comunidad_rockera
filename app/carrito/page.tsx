@@ -7,10 +7,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Minus, Plus, Trash2, ShoppingCart, User, Mail, Phone, MapPin, Home, MessageSquare } from "lucide-react"
 import Image from "next/image"
 import { useCart } from "@/app/store/cart"   // ⬅️ NUEVO
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import type {
   CreateOrderPayload, CreateShippingAddress, CreateOrderItem
 } from "@/types/payment"
@@ -23,6 +30,7 @@ type CustomerData = {
   apellido: string
   email: string
   telefono: string
+  region: string
   ciudad: string
   direccion: string
   codigoPostal: string
@@ -36,10 +44,37 @@ export default function CarritoPage() {
   const { items, updateQty, removeItem, subtotal, clear } = useCart()
   const [showCheckout, setShowCheckout] = useState(false)
   const [customerData, setCustomerData] = useState<CustomerData>({
-    nombre: "", apellido: "", email: "", telefono: "", ciudad: "", direccion: "", codigoPostal: "", comentarios: "",
+    nombre: "", apellido: "", email: "", telefono: "", region: "", ciudad: "", direccion: "", codigoPostal: "", comentarios: "",
   })
   const [errors, setErrors] = useState<FormErrors>({})
   const { createOrder, isLoading } = usePayment()
+
+  const regionsToCommunes = useMemo(() => {
+    return {
+      "Arica y Parinacota": ["Arica", "Camarones", "Putre", "General Lagos"],
+      Tarapacá: ["Iquique", "Alto Hospicio", "Pozo Almonte", "Camiña", "Colchane", "Huara", "Pica"],
+      Antofagasta: ["Antofagasta", "Mejillones", "Sierra Gorda", "Taltal", "Calama", "Ollagüe", "San Pedro de Atacama", "Tocopilla", "María Elena"],
+      Atacama: ["Copiapó", "Caldera", "Tierra Amarilla", "Chañaral", "Diego de Almagro", "Vallenar", "Alto del Carmen", "Freirina", "Huasco"],
+      Coquimbo: ["La Serena", "Coquimbo", "Andacollo", "La Higuera", "Paihuano", "Vicuña", "Illapel", "Canela", "Los Vilos", "Salamanca", "Ovalle", "Combarbalá", "Monte Patria", "Punitaqui", "Río Hurtado"],
+      Valparaíso: ["Valparaíso", "Casablanca", "Concón", "Juan Fernández", "Puchuncaví", "Quintero", "Viña del Mar", "Isla de Pascua", "Los Andes", "Calle Larga", "Rinconada", "San Esteban", "La Ligua", "Cabildo", "Papudo", "Petorca", "Zapallar", "Quillota", "Calera", "Hijuelas", "La Cruz", "Nogales", "San Antonio", "Algarrobo", "Cartagena", "El Quisco", "El Tabo", "Santo Domingo", "San Felipe", "Catemu", "Llaillay", "Panquehue", "Putaendo", "Santa María", "Quilpué", "Limache", "Olmué", "Villa Alemana"],
+      "Región Metropolitana": ["Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "Estación Central", "Huechuraba", "Independencia", "La Cisterna", "La Florida", "La Granja", "La Pintana", "La Reina", "Las Condes", "Lo Barnechea", "Lo Espejo", "Lo Prado", "Macul", "Maipú", "Ñuñoa", "Pedro Aguirre Cerda", "Peñalolén", "Providencia", "Pudahuel", "Quilicura", "Quinta Normal", "Recoleta", "Renca", "San Joaquín", "San Miguel", "San Ramón", "Santiago", "Vitacura", "Puente Alto", "Pirque", "San José de Maipo", "Colina", "Lampa", "Tiltil", "San Bernardo", "Buin", "Calera de Tango", "Paine", "Melipilla", "Alhué", "Curacaví", "María Pinto", "San Pedro", "Talagante", "El Monte", "Isla de Maipo", "Padre Hurtado", "Peñaflor"],
+      "O'Higgins": ["Rancagua", "Codegua", "Coinco", "Coltauco", "Doñihue", "Graneros", "Las Cabras", "Machalí", "Malloa", "Mostazal", "Olivar", "Peumo", "Pichidegua", "Quinta de Tilcoco", "Rengo", "Requínoa", "San Vicente", "Pichilemu", "La Estrella", "Litueche", "Marchihue", "Navidad", "Paredones", "San Fernando", "Chépica", "Chimbarongo", "Lolol", "Nancagua", "Palmilla", "Peralillo", "Placilla", "Pumanque", "Santa Cruz"],
+      Maule: ["Talca", "Constitución", "Curepto", "Empedrado", "Maule", "Pelarco", "Pencahue", "Río Claro", "San Clemente", "San Rafael", "Cauquenes", "Chanco", "Pelluhue", "Curicó", "Hualañé", "Licantén", "Molina", "Rauco", "Romeral", "Sagrada Familia", "Teno", "Vichuquén", "Linares", "Colbún", "Longaví", "Parral", "Retiro", "San Javier", "Villa Alegre", "Yerbas Buenas"],
+      Ñuble: ["Chillán", "Chillán Viejo", "El Carmen", "Pemuco", "Pinto", "Quillón", "San Ignacio", "Yungay", "Bulnes", "Cobquecura", "Coelemu", "Coihueco", "Ñiquén", "Portezuelo", "Quirihue", "Ránquil", "San Carlos", "San Fabián", "San Nicolás", "Treguaco", "Ninhue"],
+      Biobío: ["Concepción", "Coronel", "Chiguayante", "Florida", "Hualqui", "Lota", "Penco", "San Pedro de la Paz", "Santa Juana", "Talcahuano", "Tomé", "Hualpén", "Lebu", "Arauco", "Cañete", "Contulmo", "Curanilahue", "Los Álamos", "Tirúa", "Los Ángeles", "Antuco", "Cabrero", "Laja", "Mulchén", "Nacimiento", "Negrete", "Quilaco", "Quilleco", "San Rosendo", "Santa Bárbara", "Tucapel", "Yumbel", "Alto Biobío"],
+      Araucanía: ["Temuco", "Carahue", "Cunco", "Curarrehue", "Freire", "Galvarino", "Gorbea", "Lautaro", "Loncoche", "Melipeuco", "Nueva Imperial", "Padre Las Casas", "Perquenco", "Pitrufquén", "Pucón", "Saavedra", "Teodoro Schmidt", "Toltén", "Vilcún", "Villarrica", "Cholchol", "Angol", "Collipulli", "Curacautín", "Ercilla", "Lonquimay", "Los Sauces", "Lumaco", "Purén", "Renaico", "Traiguén", "Victoria"],
+      "Los Ríos": ["Valdivia", "Corral", "Lanco", "Los Lagos", "Máfil", "Mariquina", "Paillaco", "Panguipulli", "La Unión", "Futrono", "Lago Ranco", "Río Bueno"],
+      "Los Lagos": ["Puerto Montt", "Calbuco", "Cochamó", "Fresia", "Frutillar", "Los Muermos", "Llanquihue", "Maullín", "Puerto Varas", "Castro", "Ancud", "Chonchi", "Curaco de Vélez", "Dalcahue", "Puqueldón", "Queilén", "Quellón", "Quemchi", "Quinchao", "Osorno", "Puerto Octay", "Purranque", "Puyehue", "Río Negro", "San Juan de la Costa", "San Pablo", "Chaitén", "Futaleufú", "Hualaihué", "Palena"],
+      Aysén: ["Coyhaique", "Lago Verde", "Aysén", "Cisnes", "Guaitecas", "Cochrane", "O'Higgins", "Tortel", "Chile Chico", "Río Ibáñez"],
+      Magallanes: ["Punta Arenas", "Laguna Blanca", "Río Verde", "San Gregorio", "Cabo de Hornos", "Antártica", "Porvenir", "Primavera", "Timaukel", "Natales", "Torres del Paine"],
+    } as Record<string, string[]>
+  }, [])
+
+  const regions = useMemo(() => Object.keys(regionsToCommunes), [regionsToCommunes])
+  const communesForSelectedRegion = useMemo(() => {
+    if (!customerData.region) return []
+    return regionsToCommunes[customerData.region] ?? []
+  }, [customerData.region, regionsToCommunes])
   
 
   const formatPrice = (price: number) =>
@@ -85,8 +120,12 @@ export default function CarritoPage() {
       newErrors.telefono = "El teléfono es obligatorio"
     }
 
+    if (!customerData.region.trim()) {
+      newErrors.region = "La región es obligatoria"
+    }
+
     if (!customerData.ciudad.trim()) {
-      newErrors.ciudad = "La ciudad es obligatoria"
+      newErrors.ciudad = "La comuna es obligatoria"
     }
 
     if (!customerData.direccion.trim()) {
@@ -104,6 +143,13 @@ export default function CarritoPage() {
       setErrors((prev) => ({ ...prev, [field]: "" }))
     }
   }
+
+  const handleRegionChange = (value: string) => {
+    setCustomerData((prev) => ({ ...prev, region: value, ciudad: "" }))
+    if (errors.region || errors.ciudad) {
+      setErrors((prev) => ({ ...prev, region: "", ciudad: "" }))
+    }
+  }
   const handleConfirmOrder = async () => {
     if (validateForm()) {
       // Aquí iría la lógica para procesar el pedido
@@ -116,7 +162,7 @@ export default function CarritoPage() {
         phone: customerData.telefono,
         address: customerData.direccion,
         city: customerData.ciudad,
-        region: "customerData",
+        region: customerData.region || "",
         zipCode: customerData.codigoPostal
       }
       const newCreateOrderItem: CreateOrderItem[] = items.map(item => ({
@@ -220,7 +266,7 @@ export default function CarritoPage() {
                     PROCEDER AL PAGO
                   </Button>
                 ) : (
-                  <Button onClick={handleConfirmOrder} className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 text-lg transform hover:scale-105 transition-all duration-300">
+                  <Button onClick={handleConfirmOrder} disabled={isLoading} className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 text-lg transform hover:scale-105 transition-all duration-300">
                     CONFIRMAR PEDIDO
                   </Button>
                 )}
@@ -295,17 +341,46 @@ export default function CarritoPage() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="region" className="text-white flex items-center">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      Región *
+                    </Label>
+                    <Select value={customerData.region} onValueChange={handleRegionChange}>
+                      <SelectTrigger id="region" className="bg-gray-800/50 border-red-800/30 text-white focus:border-red-500">
+                        <SelectValue placeholder="Selecciona una región" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {regions.map((region) => (
+                          <SelectItem key={region} value={region}>
+                            {region}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.region && <p className="text-red-400 text-sm">{errors.region}</p>}
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="ciudad" className="text-white flex items-center">
                       <MapPin className="w-4 h-4 mr-2" />
-                      Ciudad *
+                      Comuna *
                     </Label>
-                    <Input
-                      id="ciudad"
+                    <Select
                       value={customerData.ciudad}
-                      onChange={(e) => handleInputChange("ciudad", e.target.value)}
-                      className="bg-gray-800/50 border-red-800/30 text-white focus:border-red-500"
-                      placeholder="Santiago, Valparaíso, etc."
-                    />
+                      onValueChange={(value) => handleInputChange("ciudad", value)}
+                      disabled={!customerData.region}
+                    >
+                      <SelectTrigger id="ciudad" className="bg-gray-800/50 border-red-800/30 text-white focus:border-red-500">
+                        <SelectValue placeholder={customerData.region ? "Selecciona una comuna" : "Selecciona una región primero"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {communesForSelectedRegion.map((comuna) => (
+                          <SelectItem key={comuna} value={comuna}>
+                            {comuna}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     {errors.ciudad && <p className="text-red-400 text-sm">{errors.ciudad}</p>}
                   </div>
 
@@ -351,6 +426,14 @@ export default function CarritoPage() {
                       rows={3}
                     />
                   </div>
+
+                  <Button
+                    onClick={handleConfirmOrder}
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 text-lg transform hover:scale-105 transition-all duration-300"
+                  >
+                    CONFIRMAR PEDIDO
+                  </Button>
 
                   <p className="text-sm text-gray-400">* Campos obligatorios</p>
                 </CardContent>

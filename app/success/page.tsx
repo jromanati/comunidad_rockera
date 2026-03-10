@@ -28,9 +28,9 @@ export default function PagoResultado() {
       }
       else {
         const response = await checkPaymentStatus(paymentId)
-        const dataWebPay = response.data_web_pay
-        if (dataWebPay) {
-          setStatus(dataWebPay.status)
+        if (response) {
+          const response_status = response.provider_response?.status ?? "FAILED"
+          setStatus(response_status)
         }
         else{
           setStatus("FAILED")
